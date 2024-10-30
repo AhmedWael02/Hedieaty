@@ -56,6 +56,7 @@ class _HomePageState extends State<HomePage> {
 
   void _createEvent() {
     // Navigate to the Create Event/Gift List screen
+    Navigator.pushNamed(context, '/eventList');
   }
 
   @override
@@ -103,7 +104,7 @@ class _HomePageState extends State<HomePage> {
             left: MediaQuery.of(context).size.width * 0.5 - 40,
             child: FloatingActionButton.extended(
               backgroundColor: Colors.amber,
-              onPressed: (){},
+              onPressed: _createEvent,
               label: Text(
                 "Create Your Own List",
                 style: TextStyle(color: Colors.black),

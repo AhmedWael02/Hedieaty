@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../views/home_page.dart';
+import '../views/event_list_page.dart';
 
 void main() {
   runApp(HedieatyApp());
@@ -13,9 +14,11 @@ class HedieatyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomePage(),
+        '/eventList': (context) => EventListPage(),
+      },
     );
   }
 }
-
-
