@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/event_controller.dart';
 import '../models/event.dart';
+import 'event_details_page.dart';
 
 class EventListPage extends StatefulWidget {
   @override
@@ -26,12 +27,27 @@ class _EventListPageState extends State<EventListPage> {
   }
 
   void _addEvent() {
-    // Placeholder for adding an event
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventDetailsPage(),
+      ),
+    ).then((_) => setState(() {
+      _events = _controller.sortEvents(_sortCriteria);
+    }));
   }
 
   void _editEvent(Event event) {
-    // Placeholder for editing an event
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventDetailsPage(event: event),
+      ),
+    ).then((_) => setState(() {
+      _events = _controller.sortEvents(_sortCriteria);
+    }));
   }
+
 
   void _deleteEvent(String id) {
     setState(() {

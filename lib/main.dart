@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../views/home_page.dart';
 import '../views/event_list_page.dart';
+import '../views/event_details_page.dart';
 
 void main() {
   runApp(HedieatyApp());
@@ -18,7 +19,9 @@ class HedieatyApp extends StatelessWidget {
       routes: {
         '/': (context) => HomePage(),
         '/eventList': (context) => EventListPage(),
+        '/eventDetails': (context) => EventDetailsPage(),
       },
+
     );
   }
 }
