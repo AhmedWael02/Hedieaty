@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../views/home_page.dart';
 import '../views/event_list_page.dart';
 import '../views/event_details_page.dart';
+import '../views/gift_list_page.dart';
+import '../models/event.dart';
 
 void main() {
   runApp(HedieatyApp());
@@ -20,6 +22,9 @@ class HedieatyApp extends StatelessWidget {
         '/': (context) => HomePage(),
         '/eventList': (context) => EventListPage(),
         '/eventDetails': (context) => EventDetailsPage(),
+        '/giftList': (context) => GiftListPage(
+          event: ModalRoute.of(context)!.settings.arguments as Event,
+        ),
       },
 
     );

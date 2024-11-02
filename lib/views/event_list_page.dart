@@ -105,10 +105,19 @@ class _EventListPageState extends State<EventListPage> {
                   ),
                 ],
               ),
+              onTap: () {
+                // Navigate to the Gift List Page
+                Navigator.pushNamed(
+                  context,
+                  '/giftList',
+                  arguments: event, // Passing the event details as arguments
+                );
+              },
             ),
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _addEvent,
         child: Icon(Icons.add),
