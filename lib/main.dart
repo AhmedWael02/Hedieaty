@@ -4,6 +4,8 @@ import '../views/event_list_page.dart';
 import '../views/event_details_page.dart';
 import '../views/gift_list_page.dart';
 import '../models/event.dart';
+import '../views/gift_details_page.dart';
+import '../models/gift.dart';
 
 void main() {
   runApp(HedieatyApp());
@@ -25,6 +27,13 @@ class HedieatyApp extends StatelessWidget {
         '/giftList': (context) => GiftListPage(
           event: ModalRoute.of(context)!.settings.arguments as Event,
         ),
+        '/giftDetails': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return GiftDetailsPage(
+            eventId: args['eventId'] as String,
+            gift: args['gift'] as Gift?,
+          );
+        },
       },
 
     );

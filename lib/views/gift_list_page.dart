@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/gift_controller.dart';
 import '../models/gift.dart';
 import '../models/event.dart';
-//import 'gift_details_page.dart'; // Uncomment this when Gift Details Page is ready
+import 'gift_details_page.dart'; // Uncomment this when Gift Details Page is ready
 
 class GiftListPage extends StatefulWidget {
   final Event event; // Accept the selected event
@@ -32,7 +32,6 @@ class _GiftListPageState extends State<GiftListPage> {
     });
   }
 
-  /* Uncomment these methods when GiftDetailsPage is implemented
   void _addGift() {
     Navigator.push(
       context,
@@ -54,7 +53,7 @@ class _GiftListPageState extends State<GiftListPage> {
           _gifts = _controller.sortGiftsForEvent(widget.event.id, _sortCriteria);
         }));
   }
-  */
+
 
   void _pledgeGift(String id) {
     setState(() {
@@ -97,7 +96,7 @@ class _GiftListPageState extends State<GiftListPage> {
               trailing: PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == "Edit") {
-                    //_editGift(gift); // Uncomment when GiftDetailsPage is implemented
+                    _editGift(gift); // Uncomment when GiftDetailsPage is implemented
                   } else if (value == "Delete") {
                     setState(() {
                       _controller.deleteGift(gift.id);
@@ -128,9 +127,7 @@ class _GiftListPageState extends State<GiftListPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          //_addGift(); // Uncomment when GiftDetailsPage is implemented
-        },
+        onPressed: _addGift,
         child: Icon(Icons.add),
       ),
     );
