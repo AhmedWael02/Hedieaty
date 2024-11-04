@@ -29,7 +29,6 @@ class EventController {
   ];
 
 
-  // Get events for a specific creator ID
   List<Event> getEventsByUserId(String userId) {
     return _events.where((event) => event.creatorId == userId).toList();
   }
