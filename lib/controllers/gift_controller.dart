@@ -9,6 +9,8 @@ class GiftController {
       description: "A sleek and stylish smartwatch",
       category: "Electronics",
       price: 199.99,
+      status: "Pledged",
+      pledgedBy: "John Doe",
     ),
     Gift(
       id: "2",
@@ -17,8 +19,10 @@ class GiftController {
       description: "A comprehensive guide to Flutter development",
       category: "Books",
       price: 29.99,
+      status: "Available",
     ),
   ];
+
 
   // Fetch all gifts for a specific event
   List<Gift> getGiftsForEvent(String eventId) {
@@ -36,6 +40,14 @@ class GiftController {
       sortedGifts.sort((a, b) => a.status.compareTo(b.status));
     }
     return sortedGifts;
+  }
+
+
+  // Fetch all pledged gifts for a specific user
+  List<Gift> getPledgedGifts(String userName) {
+    return _gifts
+        .where((gift) => gift.pledgedBy != null && gift.pledgedBy == userName)
+        .toList();
   }
 
   // Add a gift to a specific event
@@ -56,11 +68,15 @@ class GiftController {
     }
   }
 
-  // Pledge a gift by marking its status
-  void pledgeGift(String id) {
+  // Pledge a gift by marking its status and pledgedBy field
+  void pledgeGift(String id, String userName) {
     final index = _gifts.indexWhere((gift) => gift.id == id);
     if (index != -1) {
       _gifts[index].status = "Pledged";
+      _gifts[index].pledgedBy = userName;
     }
   }
 }
+
+
+

@@ -69,6 +69,12 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.add),
             onPressed: _addFriend,
           ),
+          IconButton(
+            icon: Icon(Icons.person),
+            onPressed: () {
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
         ],
       ),
       body: Stack(

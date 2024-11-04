@@ -6,6 +6,8 @@ import '../views/gift_list_page.dart';
 import '../models/event.dart';
 import '../views/gift_details_page.dart';
 import '../models/gift.dart';
+import '../views/profile_page.dart';
+import '../views/pledged_gifts_page.dart';
 
 void main() {
   runApp(HedieatyApp());
@@ -34,6 +36,11 @@ class HedieatyApp extends StatelessWidget {
             gift: args['gift'] as Gift?,
           );
         },
+        '/profile': (context) => ProfilePage(),
+        '/pledgedGifts': (context) => PledgedGiftsPage(
+          userName: "John Doe", // Replace with dynamic userName if available
+        ),
+
       },
 
     );

@@ -57,7 +57,7 @@ class _GiftListPageState extends State<GiftListPage> {
 
   void _pledgeGift(String id) {
     setState(() {
-      _controller.pledgeGift(id);
+      _controller.pledgeGift(id, "John Doe");
       _gifts = _controller.sortGiftsForEvent(widget.event.id, _sortCriteria);
     });
   }

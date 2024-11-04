@@ -6,6 +6,7 @@ class Gift {
   final String category;
   final double price;
   String status; // "Available", "Pledged"
+  String? pledgedBy; // User who pledged the gift
 
   Gift({
     required this.id,
@@ -15,5 +16,6 @@ class Gift {
     required this.category,
     required this.price,
     this.status = "Available",
+    this.pledgedBy,
   });
 }
