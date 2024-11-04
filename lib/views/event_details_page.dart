@@ -4,8 +4,10 @@ import '../models/event.dart';
 
 class EventDetailsPage extends StatefulWidget {
   final Event? event; // Null if adding a new event
+  final String userId;
 
-  EventDetailsPage({Key? key, this.event}) : super(key: key);
+  EventDetailsPage({Key? key, this.event, required this.userId})
+      : super(key: key);
 
   @override
   _EventDetailsPageState createState() => _EventDetailsPageState();
@@ -39,6 +41,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         category: _categoryController.text,
         date: _selectedDate,
         status: _status,
+        creatorId: widget.event?.creatorId ?? widget.userId, // Retain existing creatorId or use userId
       );
 
       if (widget.event == null) {

@@ -1,4 +1,5 @@
 class User {
+  String id;
   String name;
   String email;
   String phoneNumber;
@@ -6,6 +7,7 @@ class User {
   bool notificationsEnabled;
 
   User({
+    required this.id,
     required this.name,
     required this.email,
     required this.phoneNumber,

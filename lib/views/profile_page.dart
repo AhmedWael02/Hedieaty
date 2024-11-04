@@ -52,7 +52,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Event> events = _eventController.events;
+    User user = _userController.user; // Current user
+    final List<Event> userEvents = _eventController.getEventsByUserId(user.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -122,13 +123,13 @@ class _ProfilePageState extends State<ProfilePage> {
             Text("My Created Events",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 12),
-            events.isNotEmpty
+            userEvents.isNotEmpty
                 ? ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              itemCount: events.length,
+              itemCount: userEvents.length,
               itemBuilder: (context, index) {
-                final event = events[index];
+                final event = userEvents[index];
                 return Card(
                   child: ListTile(
                     title: Text(event.name),

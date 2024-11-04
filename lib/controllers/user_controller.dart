@@ -3,6 +3,7 @@ import '../models/user.dart';
 class UserController {
   // Dummy initial user data
   User _user = User(
+    id: "4",
     name: "John Doe",
     email: "johndoe@example.com",
     phoneNumber: "+1234567890",

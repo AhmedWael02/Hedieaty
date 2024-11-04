@@ -24,8 +24,20 @@ class HedieatyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => HomePage(),
-        '/eventList': (context) => EventListPage(),
-        '/eventDetails': (context) => EventDetailsPage(),
+        // Updated Event List Page Route
+        '/eventList': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return EventListPage(userId: args['userId'] as String);
+        },
+
+        // Updated Event Details Page Route
+        '/eventDetails': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return EventDetailsPage(
+            userId: args['userId'] as String,
+            event: args['event'] as Event?,
+          );
+        },
         '/giftList': (context) => GiftListPage(
           event: ModalRoute.of(context)!.settings.arguments as Event,
         ),

@@ -4,6 +4,11 @@ import '../models/event.dart';
 import 'event_details_page.dart';
 
 class EventListPage extends StatefulWidget {
+
+  final String userId; // Accept user ID as a parameter
+
+  EventListPage({Key? key, required this.userId}) : super(key: key);
+
   @override
   _EventListPageState createState() => _EventListPageState();
 }
@@ -15,14 +20,14 @@ class _EventListPageState extends State<EventListPage> {
 
   @override
   void initState() {
-    super.initState();
-    _events = _controller.sortEvents(_sortCriteria);
+    super.initState(); // Filter events by user ID
+    _events = _controller.sortEvents(widget.userId,_sortCriteria);
   }
 
   void _sortEvents(String criteria) {
     setState(() {
       _sortCriteria = criteria;
-      _events = _controller.sortEvents(criteria);
+      _events = _controller.sortEvents(widget.userId,_sortCriteria);// Re-sort after filtering
     });
   }
 
@@ -30,10 +35,12 @@ class _EventListPageState extends State<EventListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EventDetailsPage(),
+        builder: (context) => EventDetailsPage(
+          userId: widget.userId, // Pass the current user ID
+        ),
       ),
     ).then((_) => setState(() {
-      _events = _controller.sortEvents(_sortCriteria);
+      _events = _controller.sortEvents(widget.userId,_sortCriteria);
     }));
   }
 
@@ -41,10 +48,14 @@ class _EventListPageState extends State<EventListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EventDetailsPage(event: event),
+        builder: (context) => EventDetailsPage(
+          event: event,
+          userId: widget.userId, // Pass the current user ID
+        ),
       ),
     ).then((_) => setState(() {
-      _events = _controller.sortEvents(_sortCriteria);
+
+      _events = _controller.sortEvents(widget.userId,_sortCriteria);
     }));
   }
 
@@ -52,7 +63,7 @@ class _EventListPageState extends State<EventListPage> {
   void _deleteEvent(String id) {
     setState(() {
       _controller.deleteEvent(id);
-      _events = _controller.sortEvents(_sortCriteria);
+      _events = _controller.sortEvents(widget.userId,_sortCriteria);
     });
   }
 

@@ -56,7 +56,11 @@ class _HomePageState extends State<HomePage> {
 
   void _createEvent() {
     // Navigate to the Create Event/Gift List screen
-    Navigator.pushNamed(context, '/eventList');
+    Navigator.pushNamed(
+      context,
+      '/eventList',
+      arguments: {'userId': "4"}, // Replace with dynamic user ID
+    );
   }
 
   @override

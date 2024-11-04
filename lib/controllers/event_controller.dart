@@ -8,6 +8,7 @@ class EventController {
       category: "Personal",
       date: DateTime(2024, 12, 20),
       status: "Upcoming",
+      creatorId: "4",
     ),
     Event(
       id: "2",
@@ -15,6 +16,7 @@ class EventController {
       category: "Celebration",
       date: DateTime(2024, 12, 25),
       status: "Upcoming",
+      creatorId: "1",
     ),
     Event(
       id: "3",
@@ -22,13 +24,19 @@ class EventController {
       category: "Work",
       date: DateTime(2024, 12, 15),
       status: "Current",
+      creatorId: "1",
     ),
   ];
 
-  List<Event> get events => List.unmodifiable(_events);
+ // List<Event> get events => List.unmodifiable(_events);
 
-  List<Event> sortEvents(String criteria) {
-    List<Event> sortedEvents = List.from(_events);
+  // Get events for a specific creator ID
+  List<Event> getEventsByUserId(String userId) {
+    return _events.where((event) => event.creatorId == userId).toList();
+  }
+
+  List<Event> sortEvents(String userId, String criteria) {
+    List<Event> sortedEvents = getEventsByUserId(userId);
     if (criteria == "Name") {
       sortedEvents.sort((a, b) => a.name.compareTo(b.name));
     } else if (criteria == "Category") {

@@ -15,6 +15,11 @@ class FriendListTile extends StatelessWidget {
       title: Text(friend.name),
       subtitle: Text("Upcoming Events: ${friend.upcomingEvents}"),
       onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/eventList',
+          arguments: {'userId': friend.id},
+        );
         // Navigate to the friend's gift list page
       },
     );
