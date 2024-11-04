@@ -28,7 +28,6 @@ class EventController {
     ),
   ];
 
- // List<Event> get events => List.unmodifiable(_events);
 
   // Get events for a specific creator ID
   List<Event> getEventsByUserId(String userId) {
