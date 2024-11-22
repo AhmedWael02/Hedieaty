@@ -12,18 +12,23 @@ class _SignInPageState extends State<SignInPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _signIn() {
+  // Asynchronous sign-in method
+  void _signIn() async {
     if (_formKey.currentState!.validate()) {
-      // Add Firebase Authentication Logic Here
       String email = _emailController.text;
       String password = _passwordController.text;
 
-      // Replace this with your user authentication logic
-      bool isSignedIn = _userController.signIn(email, password);
+      // Use the updated sign-in logic
+      bool isSignedIn = await _userController.signIn(email, password);
 
       if (isSignedIn) {
+        // Navigate to the home page on successful sign-in
         Navigator.pushReplacementNamed(context, '/homePage');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Sign-in successful!")),
+        );
       } else {
+        // Display an error message for invalid credentials
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Invalid email or password")),
         );
@@ -48,6 +53,7 @@ class _SignInPageState extends State<SignInPage> {
                 validator: (value) =>
                 value == null || !value.contains('@') ? "Enter a valid email" : null,
               ),
+              SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(labelText: "Password"),
