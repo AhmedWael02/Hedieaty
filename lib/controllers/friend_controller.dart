@@ -1,33 +1,32 @@
 import '../models/friend.dart';
+import 'database_helper.dart';
 
 class FriendController {
-  final List<Friend> _friends = [
-    Friend(
-      id: "1",
-      name: "Alice",
-      profileUrl: "https://via.placeholder.com/150",
-      upcomingEvents: 2,
-    ),
-    Friend(
-      id: "2",
-      name: "Bob",
-      profileUrl: "https://via.placeholder.com/150",
-      upcomingEvents: 0,
-    ),
-    Friend(
-      id: "3",
-      name: "Charlie",
-      profileUrl: "https://via.placeholder.com/150",
-      upcomingEvents: 1,
-    ),
-  ];
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  List<Friend> get friends => List.unmodifiable(_friends);
+  Future<List<Friend>> getFriendsByUserId(String userId) async {
+    final friends = await _dbHelper.getFriendsByUserId(userId);
+    return friends.map((friendMap) {
+      return Friend(
+        id: friendMap['friendId'],
+        name: '', // Retrieve name if needed from Users table
+        profileUrl: '', // Profile URL logic here if applicable
+        upcomingEvents: 0, // Calculate based on events table if needed
+      );
+    }).toList();
+  }
 
-  List<Friend> searchFriends(String query) {
-    return _friends
+
+
+  Future<List<Friend>> searchFriends(String userId, String query) async {
+    // Fetch friends for the given user ID from the database
+    List<Friend> friends = await getFriendsByUserId(userId);
+
+    // Filter the friends list based on the query
+    return friends
         .where((friend) =>
         friend.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
+
 }

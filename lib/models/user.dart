@@ -3,6 +3,7 @@ class User {
   String name;
   String email;
   String phoneNumber;
+  String password;
   String themePreference;
   bool notificationsEnabled;
 
@@ -11,6 +12,7 @@ class User {
     required this.name,
     required this.email,
     required this.phoneNumber,
+    required this.password,
     this.themePreference = "Light Mode",
     this.notificationsEnabled = true,
   });

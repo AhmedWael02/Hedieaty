@@ -1,62 +1,77 @@
 import '../models/event.dart';
+import 'database_helper.dart';
 
 class EventController {
-  final List<Event> _events = [
-    Event(
-      id: "1",
-      name: "Birthday Party",
-      category: "Personal",
-      date: DateTime(2024, 12, 20),
-      status: "Upcoming",
-      creatorId: "4",
-    ),
-    Event(
-      id: "2",
-      name: "Wedding",
-      category: "Celebration",
-      date: DateTime(2024, 12, 25),
-      status: "Upcoming",
-      creatorId: "1",
-    ),
-    Event(
-      id: "3",
-      name: "Project Deadline",
-      category: "Work",
-      date: DateTime(2024, 12, 15),
-      status: "Current",
-      creatorId: "1",
-    ),
-  ];
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
-
-  List<Event> getEventsByUserId(String userId) {
-    return _events.where((event) => event.creatorId == userId).toList();
+  Future<List<Event>> getEventsByUserId(String userId) async {
+    final events = await _dbHelper.getEventsByUserId(userId);
+    return events.map((eventMap) {
+      return Event(
+        id: eventMap['id'],
+        name: eventMap['name'],
+        date: DateTime.parse(eventMap['date']),
+        location: eventMap['location'],
+        description: eventMap['description'],
+        category: eventMap['category'],
+        status: eventMap['status'],
+        creatorId: eventMap['userId'],
+      );
+    }).toList();
   }
 
-  List<Event> sortEvents(String userId, String criteria) {
-    List<Event> sortedEvents = getEventsByUserId(userId);
+
+  Future<List<Event>> sortEvents(String userId, String criteria) async {
+    // Fetch events for the given user ID
+    List<Event> events = await getEventsByUserId(userId);
+
+    // Sort the events based on the criteria
     if (criteria == "Name") {
-      sortedEvents.sort((a, b) => a.name.compareTo(b.name));
+      events.sort((a, b) => a.name.compareTo(b.name));
     } else if (criteria == "Category") {
-      sortedEvents.sort((a, b) => a.category.compareTo(b.category));
+      events.sort((a, b) => a.category.compareTo(b.category));
     } else if (criteria == "Status") {
-      sortedEvents.sort((a, b) => a.status.compareTo(b.status));
+      events.sort((a, b) => a.status.compareTo(b.status));
     }
-    return sortedEvents;
+
+    return events;
   }
 
-  void addEvent(Event event) {
-    _events.add(event);
+
+  Future<void> addEvent(Event event) async {
+    await _dbHelper.insertEvent({
+      'id': event.id,
+      'name': event.name,
+      'date': event.date.toIso8601String(),
+      'location': event.location,
+      'description': event.description,
+      'category': event.category,
+      'status': event.status,
+      'userId': event.creatorId,
+    });
   }
 
-  void deleteEvent(String id) {
-    _events.removeWhere((event) => event.id == id);
+  Future<void> deleteEvent(String id) async {
+    final db = await _dbHelper.database;
+    await db.delete('Events', where: 'id = ?', whereArgs: [id]);
   }
 
-  void updateEvent(Event updatedEvent) {
-    final index = _events.indexWhere((event) => event.id == updatedEvent.id);
-    if (index != -1) {
-      _events[index] = updatedEvent;
-    }
+  Future<void> updateEvent(Event event) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'Events',
+      {
+        'name': event.name,
+        'date': event.date.toIso8601String(),
+        'location': event.location,
+        'description': event.description,
+        'category': event.category,
+        'status': event.status,
+        'userId': event.creatorId,
+      },
+      where: 'id = ?',
+      whereArgs: [event.id],
+    );
   }
+
 }
