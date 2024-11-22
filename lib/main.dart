@@ -8,6 +8,8 @@ import '../views/gift_details_page.dart';
 import '../models/gift.dart';
 import '../views/profile_page.dart';
 import '../views/pledged_gifts_page.dart';
+import '../views/sign_in_page.dart';
+import '../views/sign_up_page.dart';
 
 void main() {
   runApp(HedieatyApp());
@@ -23,7 +25,10 @@ class HedieatyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => HomePage(),
+        '/': (context) => SignInPage(),
+        '/signIn': (context) => SignInPage(),
+        '/signUp': (context) => SignUpPage(),
+        '/homePage': (context) => HomePage(),
         // Updated Event List Page Route
         '/eventList': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;

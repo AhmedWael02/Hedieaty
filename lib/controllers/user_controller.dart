@@ -26,4 +26,26 @@ class UserController {
     _user.themePreference = themePreference;
     _user.notificationsEnabled = notificationsEnabled;
   }
+
+
+
+  bool signIn(String email, String password) {
+    // Add Firebase sign-in logic here
+    if (email == "test@example.com" && password == "password") {
+      // Mock logic for now
+      return true;
+    }
+    return false;
+  }
+
+  bool signUp(String email, String password, String name) {
+    // Add Firebase sign-up logic here
+    return true; // Mock return
+  }
+
+
+
 }
+
+
+
