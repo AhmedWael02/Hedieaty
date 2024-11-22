@@ -6,6 +6,11 @@ import '../controllers/gift_controller.dart';
 import '../models/event.dart';
 
 class ProfilePage extends StatefulWidget {
+
+  final String userId; // Pass the signed-in user ID
+
+  ProfilePage({required this.userId});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -18,43 +23,67 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
-  String _selectedTheme = "Light Mode";
-  bool _notificationsEnabled = true;
+  late String _selectedTheme;
+  late bool _notificationsEnabled;
+
+  User? _currentUser;
+  List<Event> _userEvents = [];
 
   @override
   void initState() {
     super.initState();
-    User user = _userController.user;
-
-    // Pre-fill user details
-    _nameController = TextEditingController(text: user.name);
-    _emailController = TextEditingController(text: user.email);
-    _phoneController = TextEditingController(text: user.phoneNumber);
-    _selectedTheme = user.themePreference;
-    _notificationsEnabled = user.notificationsEnabled;
+    _loadUserData();
+    _loadUserEvents();
   }
 
-  void _saveChanges() {
-    _userController.updateUser(
-      name: _nameController.text,
-      email: _emailController.text,
-      phoneNumber: _phoneController.text,
-      themePreference: _selectedTheme,
-      notificationsEnabled: _notificationsEnabled,
-    );
+  Future<void> _loadUserData() async {
+    User? user = await _userController.getUserById(widget.userId);
+    if (user != null) {
+      setState(() {
+        _currentUser = user;
+        _nameController = TextEditingController(text: user.name);
+        _emailController = TextEditingController(text: user.email);
+        _phoneController = TextEditingController(text: user.phoneNumber);
+        _selectedTheme = user.themePreference;
+        _notificationsEnabled = user.notificationsEnabled;
+      });
+    }
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Profile updated successfully!")),
-    );
+  Future<void> _loadUserEvents() async {
+    List<Event> events = await _eventController.getEventsByUserId(widget.userId);
+    setState(() {
+      _userEvents = events;
+    });
+  }
 
-    setState(() {});
+  Future<void> _saveChanges() async {
+    if (_currentUser != null) {
+      _currentUser = User(
+        id: _currentUser!.id,
+        name: _nameController.text,
+        email: _emailController.text,
+        phoneNumber: _phoneController.text,
+        password: _currentUser!.password, // Password remains unchanged
+        themePreference: _selectedTheme,
+        notificationsEnabled: _notificationsEnabled,
+      );
+
+      await _userController.editUser(_currentUser!);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Profile updated successfully!")),
+      );
+
+      setState(() {}); // Refresh UI if needed
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    User user = _userController.user; // Current user
-    final List<Event> userEvents = _eventController.getEventsByUserId(user.id);
-
+    if (_currentUser == null) {
+      return Center(child: CircularProgressIndicator());
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text("My Profile"),
@@ -123,13 +152,13 @@ class _ProfilePageState extends State<ProfilePage> {
             Text("My Created Events",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 12),
-            userEvents.isNotEmpty
+            _userEvents.isNotEmpty
                 ? ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              itemCount: userEvents.length,
+              itemCount: _userEvents.length,
               itemBuilder: (context, index) {
-                final event = userEvents[index];
+                final event = _userEvents[index];
                 return Card(
                   child: ListTile(
                     title: Text(event.name),

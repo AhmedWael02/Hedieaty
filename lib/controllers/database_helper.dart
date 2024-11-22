@@ -97,6 +97,17 @@ class DatabaseHelper {
     return await db.query('Users');
   }
 
+  Future<int> updateUser(Map<String, dynamic> user, String userId) async {
+    final db = await database;
+    return await db.update(
+      'Users',
+      user,
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+
 // Insert Event
   Future<int> insertEvent(Map<String, dynamic> event) async {
     final db = await database;

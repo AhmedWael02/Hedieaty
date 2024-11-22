@@ -40,6 +40,18 @@ class UserController {
   });
   }
 
+  Future<void> editUser(User user) async {
+    await _dbHelper.updateUser({
+      'name': user.name,
+      'email': user.email,
+      'phoneNumber': user.phoneNumber,
+      'themePreference': user.themePreference,
+      'notificationsEnabled': user.notificationsEnabled ? 1 : 0,
+    }, user.id);
+  }
+
+
+
   Future<List<User>> getAllUsers() async {
   final users = await _dbHelper.getUsers();
   return users.map((userMap) {

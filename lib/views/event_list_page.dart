@@ -15,7 +15,7 @@ class EventListPage extends StatefulWidget {
 
 class _EventListPageState extends State<EventListPage> {
   final EventController _controller = EventController();
-  late List<Event> _events;
+  List<Event> _events = [];
   String _sortCriteria = "Name";
 
   @override
