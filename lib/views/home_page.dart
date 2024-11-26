@@ -4,6 +4,10 @@ import '../widgets/friend_list_tile.dart';
 import '../models/friend.dart';
 
 class HomePage extends StatefulWidget {
+  final String userId; // Pass the signed-in user's ID
+
+  HomePage({required this.userId});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -12,21 +16,32 @@ class _HomePageState extends State<HomePage> {
   final FriendController _controller = FriendController();
   final TextEditingController _searchController = TextEditingController();
   List<Friend> _filteredFriends = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _filteredFriends = _controller.friends;
+    _loadFriends();
   }
 
-  void _onSearchChanged(String query) {
+  Future<void> _loadFriends() async {
+    List<Friend> friends = await _controller.getFriendsByUserId(widget.userId);
     setState(() {
-      _filteredFriends = _controller.searchFriends(query);
+      _filteredFriends = friends;
+      _isLoading = false;
     });
   }
 
+  Future<void> _onSearchChanged(String query) async {
+    List<Friend> friends = await _controller.searchFriends(widget.userId, query);
+    setState(() {
+      _filteredFriends = friends;
+    });
+  }
+
+
+
   void _addFriend() {
-    // Placeholder: Add functionality to add a friend using a phone number.
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -55,11 +70,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _createEvent() {
-    // Navigate to the Create Event/Gift List screen
     Navigator.pushNamed(
       context,
       '/eventList',
-      arguments: {'userId': "4"}, // Replace with dynamic user ID
+      arguments: {'userId': widget.userId},
+    );
+  }
+
+  void _viewProfile() {
+    Navigator.pushNamed(
+      context,
+      '/profile',
+      arguments: widget.userId,
     );
   }
 
@@ -75,9 +97,7 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
+            onPressed: _viewProfile,
           ),
         ],
       ),
@@ -100,12 +120,16 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Expanded(
-                child: ListView.builder(
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : _filteredFriends.isNotEmpty
+                    ? ListView.builder(
                   itemCount: _filteredFriends.length,
                   itemBuilder: (context, index) {
                     return FriendListTile(friend: _filteredFriends[index]);
                   },
-                ),
+                )
+                    : Center(child: Text("No friends found.")),
               ),
             ],
           ),

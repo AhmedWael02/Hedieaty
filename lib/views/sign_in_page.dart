@@ -19,11 +19,11 @@ class _SignInPageState extends State<SignInPage> {
       String password = _passwordController.text;
 
       // Use the updated sign-in logic
-      bool isSignedIn = await _userController.signIn(email, password);
+      String? userId = await _userController.signIn(email, password);
 
-      if (isSignedIn) {
-        // Navigate to the home page on successful sign-in
-        Navigator.pushReplacementNamed(context, '/homePage');
+      if (userId != null) {
+        // Navigate to the home page on successful sign-in, passing userId
+        Navigator.pushReplacementNamed(context, '/homePage', arguments: userId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Sign-in successful!")),
         );

@@ -23,12 +23,15 @@ class HedieatyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/',
+      initialRoute: '/signIn',
       routes: {
-        '/': (context) => SignInPage(),
         '/signIn': (context) => SignInPage(),
         '/signUp': (context) => SignUpPage(),
-        '/homePage': (context) => HomePage(),
+        // Home Page Route
+        '/homePage': (context) {
+          final userId = ModalRoute.of(context)!.settings.arguments as String;
+          return HomePage(userId: userId);
+        },
         // Updated Event List Page Route
         '/eventList': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
@@ -53,7 +56,11 @@ class HedieatyApp extends StatelessWidget {
             gift: args['gift'] as Gift?,
           );
         },
-        '/profile': (context) => ProfilePage(),
+        // Profile Page Route
+        '/profile': (context) {
+          final userId = ModalRoute.of(context)!.settings.arguments as String;
+          return ProfilePage(userId: userId);
+        },
         '/pledgedGifts': (context) => PledgedGiftsPage(
           userName: "John Doe", // Replace with dynamic userName if available
         ),

@@ -68,31 +68,25 @@ class UserController {
   }
 
 
-  Future<bool> signIn(String email, String password) async {
+  Future<String?> signIn(String email, String password) async {
     try {
-      // Hash the input password
       String hashedPassword = hashPassword(password);
-
-      // Fetch all users from the database
       final users = await _dbHelper.getUsers();
-
-      // Search for a user with the matching email and hashed password
       final userMap = users.firstWhere(
             (user) => user['email'] == email && user['password'] == hashedPassword,
         orElse: () => {},
       );
 
-      // If user exists, return true
       if (userMap.isNotEmpty) {
-        return true; // Sign-in successful
-      } else {
-        return false; // No matching user
+        return userMap['id'] as String; // Return user ID on success
       }
+      return null; // Return null if no match
     } catch (e) {
       print("Error during sign-in: $e");
-      return false; // Sign-in failed due to error
+      return null; // Handle error case
     }
   }
+
 
 
   // Sign up method to save user details
