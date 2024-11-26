@@ -21,31 +21,37 @@ class _EventListPageState extends State<EventListPage> {
   @override
   void initState() {
     super.initState(); // Filter events by user ID
-    _events = _controller.sortEvents(widget.userId,_sortCriteria);
+    _loadEvents(); // Load events for the user when the page is initialized
   }
 
-  void _sortEvents(String criteria) {
+  Future<void> _loadEvents() async {
+    List<Event> events = await _controller.sortEvents(widget.userId, _sortCriteria);
     setState(() {
-      _sortCriteria = criteria;
-      _events = _controller.sortEvents(widget.userId,_sortCriteria);// Re-sort after filtering
+      _events = events;
     });
   }
 
-  void _addEvent() {
-    Navigator.push(
+  void _sortEvents(String criteria) async {
+    setState(() {
+      _sortCriteria = criteria;
+    });
+    await _loadEvents(); // Reload events based on new sort criteria
+  }
+
+  Future<void> _addEvent() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EventDetailsPage(
           userId: widget.userId, // Pass the current user ID
         ),
       ),
-    ).then((_) => setState(() {
-      _events = _controller.sortEvents(widget.userId,_sortCriteria);
-    }));
+    );
+    await _loadEvents(); // Reload events after adding a new one
   }
 
-  void _editEvent(Event event) {
-    Navigator.push(
+  Future<void> _editEvent(Event event) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => EventDetailsPage(
@@ -53,18 +59,14 @@ class _EventListPageState extends State<EventListPage> {
           userId: widget.userId, // Pass the current user ID
         ),
       ),
-    ).then((_) => setState(() {
-
-      _events = _controller.sortEvents(widget.userId,_sortCriteria);
-    }));
+    );
+    await _loadEvents(); // Reload events after editing
   }
 
 
-  void _deleteEvent(String id) {
-    setState(() {
-      _controller.deleteEvent(id);
-      _events = _controller.sortEvents(widget.userId,_sortCriteria);
-    });
+  Future<void> _deleteEvent(String id) async {
+    await _controller.deleteEvent(id);
+    await _loadEvents(); // Reload events after deletion
   }
 
   @override
@@ -89,7 +91,8 @@ class _EventListPageState extends State<EventListPage> {
           ),
         ],
       ),
-      body: ListView.builder(
+      body: _events.isNotEmpty
+          ? ListView.builder(
         itemCount: _events.length,
         itemBuilder: (context, index) {
           final event = _events[index];
@@ -127,8 +130,9 @@ class _EventListPageState extends State<EventListPage> {
             ),
           );
         },
-      ),
+      )
 
+          : Center(child: Text("No events found. Add one to get started!")),
       floatingActionButton: FloatingActionButton(
         onPressed: _addEvent,
         child: Icon(Icons.add),

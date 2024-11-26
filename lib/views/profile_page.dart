@@ -27,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late bool _notificationsEnabled;
 
   User? _currentUser;
-  List<Event> _userEvents = [];
+  List<Event>? _userEvents; // Null indicates data is still loading
 
   @override
   void initState() {
@@ -152,13 +152,15 @@ class _ProfilePageState extends State<ProfilePage> {
             Text("My Created Events",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 12),
-            _userEvents.isNotEmpty
+            _userEvents == null
+                ? Center(child: CircularProgressIndicator())
+                : _userEvents!.isNotEmpty
                 ? ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              itemCount: _userEvents.length,
+              itemCount: _userEvents!.length,
               itemBuilder: (context, index) {
-                final event = _userEvents[index];
+                final event = _userEvents![index];
                 return Card(
                   child: ListTile(
                     title: Text(event.name),

@@ -19,36 +19,46 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
   late TextEditingController _nameController;
   late TextEditingController _categoryController;
+  late TextEditingController _locationController;
+  late TextEditingController _descriptionController;
   late DateTime _selectedDate;
-  String _status = "Upcoming";
+  late String _status;
 
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.event?.name ?? '');
-    _categoryController =
-        TextEditingController(text: widget.event?.category ?? '');
+    // Initialize form fields with existing event data or defaults
+    _nameController = TextEditingController(text: widget.event?.name ?? '');
+    _categoryController = TextEditingController(text: widget.event?.category ?? '');
+    _locationController = TextEditingController(text: widget.event?.location ?? '');
+    _descriptionController = TextEditingController(text: widget.event?.description ?? '');
     _selectedDate = widget.event?.date ?? DateTime.now();
     _status = widget.event?.status ?? "Upcoming";
   }
 
-  void _saveEvent() {
+  Future<void> _saveEvent() async {
     if (_formKey.currentState!.validate()) {
       final newEvent = Event(
-        id: widget.event?.id ?? DateTime.now().toString(),
+        id: widget.event?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         category: _categoryController.text,
+        location: _locationController.text,
+        description: _descriptionController.text,
         date: _selectedDate,
         status: _status,
         creatorId: widget.event?.creatorId ?? widget.userId, // Retain existing creatorId or use userId
       );
 
+      // Save or update the event using the controller
       if (widget.event == null) {
-        _controller.addEvent(newEvent);
+        await _controller.addEvent(newEvent);
       } else {
-        _controller.updateEvent(newEvent);
+        await _controller.updateEvent(newEvent);
       }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Event ${widget.event == null ? "added" : "updated"} successfully!")),
+      );
 
       Navigator.pop(context);
     }
@@ -103,6 +113,33 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                     return null;
                   },
                 ),
+
+                SizedBox(height: 16),
+
+                // Location Field
+                TextFormField(
+                  controller: _locationController,
+                  decoration: InputDecoration(labelText: "Location"),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please enter the event location";
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 16),
+
+                // Description Field
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(labelText: "Description"),
+                  maxLines: 3,
+                ),
+                SizedBox(height: 16),
+
+                // Date Picker
+
                 SizedBox(height: 16),
                 Text("Date: ${_selectedDate.toLocal()}".split(' ')[0]),
                 TextButton(
@@ -110,6 +147,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                   child: Text("Select Date"),
                 ),
                 SizedBox(height: 16),
+
                 DropdownButtonFormField<String>(
                   value: _status,
                   items: ["Upcoming", "Current", "Past"]
@@ -126,6 +164,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                   decoration: InputDecoration(labelText: "Status"),
                 ),
                 SizedBox(height: 24),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
