@@ -46,9 +46,14 @@ class HedieatyApp extends StatelessWidget {
             event: args['event'] as Event?,
           );
         },
-        '/giftList': (context) => GiftListPage(
-          event: ModalRoute.of(context)!.settings.arguments as Event,
-        ),
+        '/giftList': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return GiftListPage(
+            event: args['event'] as Event,
+            userId: args['userId'] as String,
+          );
+        },
+
         '/giftDetails': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return GiftDetailsPage(
@@ -61,9 +66,11 @@ class HedieatyApp extends StatelessWidget {
           final userId = ModalRoute.of(context)!.settings.arguments as String;
           return ProfilePage(userId: userId);
         },
-        '/pledgedGifts': (context) => PledgedGiftsPage(
-          userName: "John Doe", // Replace with dynamic userName if available
-        ),
+        // Pledged Gifts Page Route
+        '/pledgedGifts': (context) {
+          final userId = ModalRoute.of(context)!.settings.arguments as String;
+          return PledgedGiftsPage(userId: userId); // Use userId dynamically
+        },
 
       },
 

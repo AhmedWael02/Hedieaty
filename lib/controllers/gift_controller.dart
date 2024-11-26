@@ -86,7 +86,7 @@ class GiftController {
 
 
 
-  Future<void> updateEvent(Gift gift) async {
+  Future<void> updateGift(Gift gift) async {
     final db = await _dbHelper.database;
     await db.update(
       'Gifts',

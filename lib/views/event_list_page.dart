@@ -124,7 +124,10 @@ class _EventListPageState extends State<EventListPage> {
                 Navigator.pushNamed(
                   context,
                   '/giftList',
-                  arguments: event, // Passing the event details as arguments
+                  arguments: {
+                    'event': event,
+                    'userId': widget.userId, // Pass the actual userId here
+                  },
                 );
               },
             ),

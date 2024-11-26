@@ -171,7 +171,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.pushNamed(
                         context,
                         '/giftList',
-                        arguments: event,
+                        arguments: {
+                          'event': event,
+                          'userId': widget.userId,
+                        },
                       );
                     },
                   ),
@@ -182,11 +185,15 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, '/pledgedGifts');
+                Navigator.pushNamed(
+                  context,
+                  '/pledgedGifts',
+                  arguments: widget.userId,
+                );
               },
               icon: Icon(Icons.card_giftcard),
               label: Text("View My Pledged Gifts"),
-            ),
+            )
 
 
           ],

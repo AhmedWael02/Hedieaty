@@ -21,27 +21,29 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
   late TextEditingController _descriptionController;
   late TextEditingController _categoryController;
   late TextEditingController _priceController;
-  String _status = "Available";
+  late String _status;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.gift?.name ?? "");
-    _descriptionController =
-        TextEditingController(text: widget.gift?.description ?? "");
-    _categoryController =
-        TextEditingController(text: widget.gift?.category ?? "");
-    _priceController =
-        TextEditingController(text: widget.gift?.price.toString() ?? "");
+    // Initialize controllers with existing gift data or defaults
+    _nameController = TextEditingController(text: widget.gift?.name ?? "");
+    _descriptionController = TextEditingController(text: widget.gift?.description ?? "");
+    _categoryController = TextEditingController(text: widget.gift?.category ?? "");
+    _priceController = TextEditingController(text: widget.gift?.price.toString() ?? "");
     _status = widget.gift?.status ?? "Available";
   }
 
-  void _saveGift() {
+  Future<void> _saveGift() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       final newGift = Gift(
         id: widget.gift?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        eventId: widget.eventId, // Link gift to event
+        eventId: widget.eventId,
         name: _nameController.text,
         description: _descriptionController.text,
         category: _categoryController.text,
@@ -49,15 +51,27 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
         status: _status,
       );
 
-      if (widget.gift == null) {
-        // Add new gift
-        _controller.addGift(newGift);
-      } else {
-        // Update existing gift
-        _controller.updateGift(newGift);
-      }
+      try {
+        if (widget.gift == null) {
+          await _controller.addGift(newGift); // Add new gift
+        } else {
+          await _controller.updateGift(newGift); // Update existing gift
+        }
 
-      Navigator.pop(context); // Return to previous page
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gift ${widget.gift == null ? "added" : "updated"} successfully!")),
+        );
+
+        Navigator.pop(context); // Return to the previous page
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save gift. Please try again.")),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -67,7 +81,9 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
       appBar: AppBar(
         title: Text(widget.gift == null ? "Add Gift" : "Edit Gift"),
       ),
-      body: Padding(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator()) // Show loading indicator
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
