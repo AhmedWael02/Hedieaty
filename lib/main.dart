@@ -35,7 +35,11 @@ class HedieatyApp extends StatelessWidget {
         // Updated Event List Page Route
         '/eventList': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-          return EventListPage(userId: args['userId'] as String);
+          return EventListPage(
+              userId: args['userId'] as String,
+              pledgerId: args['pledgerId'] as String?,
+
+          );
         },
 
         // Updated Event Details Page Route
@@ -51,6 +55,8 @@ class HedieatyApp extends StatelessWidget {
           return GiftListPage(
             event: args['event'] as Event,
             userId: args['userId'] as String,
+            pledgerId: args['pledgerId'] as String?,
+
           );
         },
 

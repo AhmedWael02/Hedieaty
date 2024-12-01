@@ -67,6 +67,28 @@ class UserController {
   }).toList();
   }
 
+  Future<User?> getUserByPhoneNumber(String phoneNumber) async {
+    final users = await _dbHelper.getUsers();
+    final userMap = users.firstWhere(
+          (user) => user['phoneNumber'] == phoneNumber,
+      orElse: () => {},
+    );
+
+    if (userMap.isNotEmpty) {
+      return User(
+        id: userMap['id'],
+        name: userMap['name'],
+        email: userMap['email'],
+        phoneNumber: userMap['phoneNumber'],
+        password: userMap['password'],
+        themePreference: userMap['themePreference'],
+        notificationsEnabled: userMap['notificationsEnabled'] == 1,
+      );
+    }
+    return null;
+  }
+
+
 
   Future<String?> signIn(String email, String password) async {
     try {

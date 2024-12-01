@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../controllers/friend_controller.dart';
+import '../controllers/user_controller.dart';
 import '../widgets/friend_list_tile.dart';
 import '../models/friend.dart';
+import '../models/user.dart';
 
 class HomePage extends StatefulWidget {
   final String userId; // Pass the signed-in user's ID
@@ -42,11 +44,14 @@ class _HomePageState extends State<HomePage> {
 
 
   void _addFriend() {
+    final TextEditingController phoneController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Add Friend"),
         content: TextField(
+          controller: phoneController,
           decoration: InputDecoration(hintText: "Enter phone number"),
           keyboardType: TextInputType.phone,
         ),
@@ -58,9 +63,39 @@ class _HomePageState extends State<HomePage> {
             child: Text("Cancel"),
           ),
           TextButton(
-            onPressed: () {
-              // Add friend logic here
-              Navigator.pop(context);
+            onPressed: () async {
+              String phoneNumber = phoneController.text;
+
+              if (phoneNumber.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Phone number cannot be empty.")),
+                );
+                return;
+              }
+
+              // Check if the user exists with the given phone number
+              UserController userController = UserController();
+              User? friend = await userController.getUserByPhoneNumber(phoneNumber);
+
+              if (friend == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("No user found with this phone number.")),
+                );
+                Navigator.pop(context);
+                return;
+              }
+
+              // Add the friend relationship
+              await _controller.addFriend(widget.userId, friend.id);
+
+              // Reload the friends list
+              await _loadFriends();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("${friend.name} has been added as a friend!")),
+              );
+
+              Navigator.pop(context); // Close the dialog
             },
             child: Text("Add"),
           ),
@@ -68,6 +103,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
 
   void _createEvent() {
     Navigator.pushNamed(
@@ -85,6 +121,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _signOut() {
+    // Redirect to Sign In page
+    Navigator.pushNamedAndRemoveUntil(context, '/signIn', (route) => false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("You have been signed out.")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,6 +142,10 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: Icon(Icons.person),
             onPressed: _viewProfile,
+          ),
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _signOut, // Sign out logic
           ),
         ],
       ),
@@ -126,7 +174,7 @@ class _HomePageState extends State<HomePage> {
                     ? ListView.builder(
                   itemCount: _filteredFriends.length,
                   itemBuilder: (context, index) {
-                    return FriendListTile(friend: _filteredFriends[index]);
+                    return FriendListTile(friend: _filteredFriends[index],userId: widget.userId,);
                   },
                 )
                     : Center(child: Text("No friends found.")),

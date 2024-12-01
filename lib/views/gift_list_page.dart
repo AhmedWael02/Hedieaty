@@ -7,8 +7,9 @@ import 'gift_details_page.dart'; // Uncomment this when Gift Details Page is rea
 class GiftListPage extends StatefulWidget {
   final Event event; // The selected event
   final String userId; // The current user's ID
+  final String? pledgerId;
 
-  GiftListPage({Key? key, required this.event, required this.userId}) : super(key: key);
+  GiftListPage({Key? key, required this.event, required this.userId, this.pledgerId}) : super(key: key);
 
   @override
   _GiftListPageState createState() => _GiftListPageState();
@@ -62,9 +63,11 @@ class _GiftListPageState extends State<GiftListPage> {
 
 
   Future<void> _pledgeGift(String id) async {
-    await _controller.pledgeGift(id, widget.userId); // Use dynamic userId
+    await _controller.pledgeGift(id, widget.pledgerId); // Pass the signed-in user's ID
     await _loadGifts(); // Reload gifts after pledging
   }
+
+
 
   @override
   Widget build(BuildContext context) {

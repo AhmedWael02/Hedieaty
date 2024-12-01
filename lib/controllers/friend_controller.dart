@@ -29,4 +29,9 @@ class FriendController {
         .toList();
   }
 
+  Future<void> addFriend(String userId, String friendId) async {
+    await _dbHelper.insertFriend(userId, friendId);
+  }
+
+
 }

@@ -105,15 +105,19 @@ class GiftController {
   }
 
   // Pledge a gift by marking its status and pledgedBy field
-  Future<void> pledgeGift(String giftId, String userId) async {
+  Future<void> pledgeGift(String giftId, String? userId) async {
     final db = await _dbHelper.database;
     await db.update(
       'Gifts',
-      {'status': 'Pledged', 'pledgedByUserId': userId},
+      {
+        'status': 'Pledged',
+        'pledgedByUserId': userId, // Update with the user ID of the pledger
+      },
       where: 'id = ?',
       whereArgs: [giftId],
     );
   }
+
 
 }
 

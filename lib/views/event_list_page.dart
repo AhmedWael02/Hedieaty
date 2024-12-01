@@ -6,8 +6,9 @@ import 'event_details_page.dart';
 class EventListPage extends StatefulWidget {
 
   final String userId; // Accept user ID as a parameter
+  final String? pledgerId;
 
-  EventListPage({Key? key, required this.userId}) : super(key: key);
+  EventListPage({Key? key, required this.userId, this.pledgerId}) : super(key: key);
 
   @override
   _EventListPageState createState() => _EventListPageState();
@@ -127,6 +128,7 @@ class _EventListPageState extends State<EventListPage> {
                   arguments: {
                     'event': event,
                     'userId': widget.userId, // Pass the actual userId here
+                    'pledgerId': widget.pledgerId,
                   },
                 );
               },

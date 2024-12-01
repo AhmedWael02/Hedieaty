@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../controllers/user_controller.dart';
 import '../models/user.dart';
 import '../controllers/event_controller.dart';
-import '../controllers/gift_controller.dart';
 import '../models/event.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -18,7 +17,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final UserController _userController = UserController();
   final EventController _eventController = EventController();
-  final GiftController _giftController = GiftController();
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
