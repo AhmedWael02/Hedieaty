@@ -32,7 +32,7 @@ class _EventListPageState extends State<EventListPage> {
     });
   }
 
-  void _sortEvents(String criteria) async {
+  Future<void> _sortEvents(String criteria) async {
     setState(() {
       _sortCriteria = criteria;
     });
@@ -101,7 +101,8 @@ class _EventListPageState extends State<EventListPage> {
             child: ListTile(
               title: Text(event.name),
               subtitle: Text("${event.category} - ${event.status}"),
-              trailing: PopupMenuButton<String>(
+              trailing: widget.pledgerId == null
+                  ? PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == "Edit") {
                     _editEvent(event);
@@ -119,7 +120,8 @@ class _EventListPageState extends State<EventListPage> {
                     child: Text("Delete"),
                   ),
                 ],
-              ),
+              )
+                  : null,
               onTap: () {
                 // Navigate to the Gift List Page
                 Navigator.pushNamed(
@@ -138,10 +140,12 @@ class _EventListPageState extends State<EventListPage> {
       )
 
           : Center(child: Text("No events found. Add one to get started!")),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: widget.pledgerId == null
+          ? FloatingActionButton(
         onPressed: _addEvent,
         child: Icon(Icons.add),
-      ),
+      )
+          : null,
     );
   }
 }

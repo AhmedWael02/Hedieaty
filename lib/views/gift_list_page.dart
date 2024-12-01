@@ -63,7 +63,7 @@ class _GiftListPageState extends State<GiftListPage> {
 
 
   Future<void> _pledgeGift(String id) async {
-    await _controller.pledgeGift(id, widget.pledgerId); // Pass the signed-in user's ID
+    await _controller.pledgeGift(id, widget.pledgerId!); // Pass the signed-in user's ID
     await _loadGifts(); // Reload gifts after pledging
   }
 
@@ -117,6 +117,7 @@ class _GiftListPageState extends State<GiftListPage> {
                   }
                 },
                 itemBuilder: (context) => [
+                  if (widget.pledgerId == null) ...[
                   PopupMenuItem(
                     value: "Edit",
                     child: Text("Edit"),
@@ -125,22 +126,26 @@ class _GiftListPageState extends State<GiftListPage> {
                     value: "Delete",
                     child: Text("Delete"),
                   ),
-                  if (gift.status != "Pledged")
+              ],
+                  if (widget.pledgerId != null && gift.status != "Pledged")
                     PopupMenuItem(
                       value: "Pledge",
                       child: Text("Pledge"),
                     ),
                 ],
+
               ),
             ),
           );
         },
       )
           : Center(child: Text("No gifts found for this event.")),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: widget.pledgerId == null
+          ? FloatingActionButton(
         onPressed: _addGift,
         child: Icon(Icons.add),
-      ),
+      )
+          : null,
     );
   }
 }
