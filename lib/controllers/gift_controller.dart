@@ -119,6 +119,23 @@ class GiftController {
   }
 
 
+  Future<void> unpledgeGift(String giftId) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'Gifts',
+      {
+        'status': 'Available',
+        'pledgedByUserId': null, // Reset pledgedByUserId
+      },
+      where: 'id = ?',
+      whereArgs: [giftId],
+    );
+  }
+
+
+
+
+
 }
 
 

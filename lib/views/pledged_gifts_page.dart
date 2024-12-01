@@ -29,6 +29,11 @@ class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
     });
   }
 
+  Future<void> _unpledgeGift(String giftId) async {
+    await _controller.unpledgeGift(giftId); // Unpledge the gift
+    await _loadPledgedGifts(); // Refresh the list
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,9 +57,20 @@ class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
               subtitle: Text(
                 "Category: ${gift.category}\nDescription: ${gift.description}",
               ),
-              trailing: Text(
-                "\$${gift.price.toStringAsFixed(2)}",
-                style: TextStyle(color: Colors.green, fontSize: 16),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "\$${gift.price.toStringAsFixed(2)}",
+                    style: TextStyle(color: Colors.green, fontSize: 16),
+                  ),
+                  SizedBox(width: 10),
+                  IconButton(
+                    icon: Icon(Icons.undo, color: Colors.red),
+                    tooltip: "Unpledge",
+                    onPressed: () => _unpledgeGift(gift.id),
+                  ),
+                ],
               ),
             ),
           );

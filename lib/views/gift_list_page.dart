@@ -67,6 +67,11 @@ class _GiftListPageState extends State<GiftListPage> {
     await _loadGifts(); // Reload gifts after pledging
   }
 
+  Future<void> _unpledgeGift(String id) async {
+    await _controller.unpledgeGift(id);
+    await _loadGifts(); // Reload gifts after unpledging
+  }
+
 
 
   @override
@@ -114,10 +119,13 @@ class _GiftListPageState extends State<GiftListPage> {
                     });
                   } else if (value == "Pledge") {
                     _pledgeGift(gift.id);
+                  } else if (value == "Unpledge") {
+                    _unpledgeGift(gift.id);
                   }
+
                 },
                 itemBuilder: (context) => [
-                  if (widget.pledgerId == null) ...[
+                  if (widget.pledgerId == null && gift.status != "Pledged") ...[
                   PopupMenuItem(
                     value: "Edit",
                     child: Text("Edit"),
@@ -131,6 +139,14 @@ class _GiftListPageState extends State<GiftListPage> {
                     PopupMenuItem(
                       value: "Pledge",
                       child: Text("Pledge"),
+                    ),
+
+                  if (gift.status == "Pledged" &&
+                      ((widget.pledgerId != null && gift.pledgedBy == widget.pledgerId) ||
+                          (widget.pledgerId == null && widget.userId == widget.event.creatorId)))
+                    PopupMenuItem(
+                      value: "Unpledge",
+                      child: Text("Unpledge"),
                     ),
                 ],
 
