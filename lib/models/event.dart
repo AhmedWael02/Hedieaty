@@ -7,6 +7,7 @@ class Event {
   final String category;
   final String status;
   final String creatorId;
+  final bool isPublished;
 
   Event({
     required this.id,
@@ -17,5 +18,6 @@ class Event {
     required this.category,
     required this.status,
     required this.creatorId,
+    this.isPublished = false,
   });
 }

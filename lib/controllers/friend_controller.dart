@@ -48,8 +48,8 @@ class FriendController {
     final db = await _dbHelper.database;
     final events = await db.query(
       'Events',
-      where: 'userId = ? AND status = ?',
-      whereArgs: [userId, 'Upcoming'],
+      where: 'userId = ? AND status = ? AND isPublished = ?',
+      whereArgs: [userId, 'Upcoming', 1],
     );
 
     return events.length;

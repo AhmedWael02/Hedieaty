@@ -62,6 +62,7 @@ class _EventListPageState extends State<EventListPage> {
         ),
       ),
     );
+    await _controller.publishEvent(event.id, false);
     await _loadEvents(); // Reload events after editing
   }
 
@@ -69,6 +70,11 @@ class _EventListPageState extends State<EventListPage> {
   Future<void> _deleteEvent(String id) async {
     await _controller.deleteEvent(id);
     await _loadEvents(); // Reload events after deletion
+  }
+
+  Future<void> _publishEvent(String eventId) async {
+    await _controller.publishEvent(eventId, true);
+    await _loadEvents();
   }
 
   @override
@@ -98,60 +104,81 @@ class _EventListPageState extends State<EventListPage> {
         itemCount: _events.length,
         itemBuilder: (context, index) {
           final event = _events[index];
-          return Card(
-            margin: const EdgeInsets.all(8.0),
-            elevation: 4,
-            child: ListTile(
-              title: Text(
-                event.name,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 5),
-                  Text("Category: ${event.category}"),
-                  Text("Status: ${event.status}"),
-                  Text("Date: ${DateFormat('dd MMM yyyy').format(event.date)}"),
-                  Text("Location: ${event.location}"),
-                  Text("Description: ${event.description}"),
-                ],
-              ),
-              trailing: widget.pledgerId == null
-                  ? PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == "Edit") {
-                    _editEvent(event);
-                  } else if (value == "Delete") {
-                    _deleteEvent(event.id);
-                  }
+
+          // Skip unpublished events if pledgerId is not null
+          if (!event.isPublished && widget.pledgerId != null) {
+            return SizedBox.shrink();
+          }
+
+          else {
+            return Card(
+              margin: const EdgeInsets.all(8.0),
+              elevation: 4,
+              child: ListTile(
+                title: Text(
+                  event.name,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 5),
+                    Text("Category: ${event.category}"),
+                    Text("Status: ${event.status}"),
+                    Text("Date: ${DateFormat('dd MMM yyyy').format(
+                        event.date)}"),
+                    Text("Location: ${event.location}"),
+                    Text("Description: ${event.description}"),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!event.isPublished && widget.pledgerId == null)
+                      IconButton(
+                        icon: Icon(Icons.publish, color: Colors.blue),
+                        tooltip: "Publish",
+                        onPressed: () => _publishEvent(event.id),
+                      ),
+                    if (widget.pledgerId == null)
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == "Edit") {
+                            _editEvent(event);
+
+                          } else if (value == "Delete") {
+                            _deleteEvent(event.id);
+                          }
+                        },
+                        itemBuilder: (context) =>
+                        [
+                          PopupMenuItem(
+                            value: "Edit",
+                            child: Text("Edit"),
+                          ),
+                          PopupMenuItem(
+                            value: "Delete",
+                            child: Text("Delete"),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+                onTap: () {
+                  // Navigate to the Gift List Page
+                  Navigator.pushNamed(
+                    context,
+                    '/giftList',
+                    arguments: {
+                      'event': event,
+                      'userId': widget.userId, // Pass the actual userId here
+                      'pledgerId': widget.pledgerId,
+                    },
+                  );
                 },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: "Edit",
-                    child: Text("Edit"),
-                  ),
-                  PopupMenuItem(
-                    value: "Delete",
-                    child: Text("Delete"),
-                  ),
-                ],
-              )
-                  : null,
-              onTap: () {
-                // Navigate to the Gift List Page
-                Navigator.pushNamed(
-                  context,
-                  '/giftList',
-                  arguments: {
-                    'event': event,
-                    'userId': widget.userId, // Pass the actual userId here
-                    'pledgerId': widget.pledgerId,
-                  },
-                );
-              },
-            ),
-          );
+              ),
+            );
+          }
         },
       )
 

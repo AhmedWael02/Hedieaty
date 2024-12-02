@@ -47,6 +47,7 @@ class DatabaseHelper {
             category TEXT,
             status TEXT,
             userId TEXT,
+            isPublished INTEGER,
             FOREIGN KEY (userId) REFERENCES Users (id)
           )
         ''');

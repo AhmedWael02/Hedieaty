@@ -16,6 +16,7 @@ class EventController {
         category: eventMap['category'],
         status: eventMap['status'],
         creatorId: eventMap['userId'],
+        isPublished: eventMap['isPublished'] == 1,
       );
     }).toList();
   }
@@ -48,6 +49,7 @@ class EventController {
       'category': event.category,
       'status': event.status,
       'userId': event.creatorId,
+      'isPublished' : event.isPublished ? 1 : 0,
     });
   }
 
@@ -68,10 +70,22 @@ class EventController {
         'category': event.category,
         'status': event.status,
         'userId': event.creatorId,
+        'isPublished' : event.isPublished ? 1 : 0,
       },
       where: 'id = ?',
       whereArgs: [event.id],
     );
   }
+
+  Future<void> publishEvent(String eventId, bool isPublished) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'Events',
+      {'isPublished': isPublished ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [eventId],
+    );
+  }
+
 
 }
