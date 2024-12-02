@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // For date formatting
 import '../controllers/event_controller.dart';
 import '../models/event.dart';
 
@@ -139,12 +140,20 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 SizedBox(height: 16),
 
                 // Date Picker
-
-                SizedBox(height: 16),
-                Text("Date: ${_selectedDate.toLocal()}".split(' ')[0]),
-                TextButton(
-                  onPressed: () => _selectDate(context),
-                  child: Text("Select Date"),
+                Row(
+                  children: [
+                    Text("Date: ",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      DateFormat('dd MMM yyyy').format(_selectedDate),
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                    Spacer(),
+                    TextButton(
+                      onPressed: () => _selectDate(context),
+                      child: Text("Change Date"),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16),
 

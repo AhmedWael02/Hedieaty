@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/event_controller.dart';
 import '../models/event.dart';
 import 'event_details_page.dart';
+import 'package:intl/intl.dart';
 
 class EventListPage extends StatefulWidget {
 
@@ -98,9 +99,24 @@ class _EventListPageState extends State<EventListPage> {
         itemBuilder: (context, index) {
           final event = _events[index];
           return Card(
+            margin: const EdgeInsets.all(8.0),
+            elevation: 4,
             child: ListTile(
-              title: Text(event.name),
-              subtitle: Text("${event.category} - ${event.status}"),
+              title: Text(
+                event.name,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5),
+                  Text("Category: ${event.category}"),
+                  Text("Status: ${event.status}"),
+                  Text("Date: ${DateFormat('dd MMM yyyy').format(event.date)}"),
+                  Text("Location: ${event.location}"),
+                  Text("Description: ${event.description}"),
+                ],
+              ),
               trailing: widget.pledgerId == null
                   ? PopupMenuButton<String>(
                 onSelected: (value) {

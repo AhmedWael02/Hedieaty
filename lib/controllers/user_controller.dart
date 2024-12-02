@@ -14,30 +14,30 @@ class UserController {
   }
 
   Future<User?> getUserById(String id) async {
-  final users = await _dbHelper.getUsers();
-  final userMap = users.firstWhere((user) => user['id'] == id, orElse: () => {});
-  if (userMap.isEmpty) return null;
-  return User(
-  id: userMap['id'],
-  name: userMap['name'],
-  email: userMap['email'],
-  phoneNumber: userMap['phoneNumber'],
-  password: userMap['password'],
-  themePreference: userMap['themePreference'],
-  notificationsEnabled: userMap['notificationsEnabled'] == 1,
-  );
+    final users = await _dbHelper.getUsers();
+    final userMap = users.firstWhere((user) => user['id'] == id, orElse: () => {});
+    if (userMap.isEmpty) return null;
+    return User(
+      id: userMap['id'],
+      name: userMap['name'],
+      email: userMap['email'],
+      phoneNumber: userMap['phoneNumber'],
+      password: userMap['password'],
+      themePreference: userMap['themePreference'],
+      notificationsEnabled: userMap['notificationsEnabled'] == 1,
+    );
   }
 
   Future<void> saveUser(User user) async {
-  await _dbHelper.insertUser({
-  'id': user.id,
-  'name': user.name,
-  'email': user.email,
-  'phoneNumber': user.phoneNumber,
-  'password': user.password, // Assuming hashed password
-  'themePreference': user.themePreference,
-  'notificationsEnabled': user.notificationsEnabled ? 1 : 0,
-  });
+    await _dbHelper.insertUser({
+      'id': user.id,
+      'name': user.name,
+      'email': user.email,
+      'phoneNumber': user.phoneNumber,
+      'password': user.password, // Assuming hashed password
+      'themePreference': user.themePreference,
+      'notificationsEnabled': user.notificationsEnabled ? 1 : 0,
+    });
   }
 
   Future<void> editUser(User user) async {
@@ -53,18 +53,18 @@ class UserController {
 
 
   Future<List<User>> getAllUsers() async {
-  final users = await _dbHelper.getUsers();
-  return users.map((userMap) {
-  return User(
-  id: userMap['id'],
-  name: userMap['name'],
-  email: userMap['email'],
-  phoneNumber: userMap['phoneNumber'],
-  password: userMap['password'],
-  themePreference: userMap['themePreference'],
-  notificationsEnabled: userMap['notificationsEnabled'] == 1,
-  );
-  }).toList();
+    final users = await _dbHelper.getUsers();
+    return users.map((userMap) {
+      return User(
+        id: userMap['id'],
+        name: userMap['name'],
+        email: userMap['email'],
+        phoneNumber: userMap['phoneNumber'],
+        password: userMap['password'],
+        themePreference: userMap['themePreference'],
+        notificationsEnabled: userMap['notificationsEnabled'] == 1,
+      );
+    }).toList();
   }
 
   Future<User?> getUserByPhoneNumber(String phoneNumber) async {
@@ -144,6 +144,3 @@ class UserController {
 
 
 }
-
-
-
