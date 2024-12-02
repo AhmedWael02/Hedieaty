@@ -132,6 +132,18 @@ class GiftController {
     );
   }
 
+  Future<void> purchaseGift(String giftId) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'Gifts',
+      {
+        'status': 'Purchased',
+      },
+      where: 'id = ?',
+      whereArgs: [giftId],
+    );
+  }
+
 
 
 

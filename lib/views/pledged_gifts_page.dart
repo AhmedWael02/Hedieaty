@@ -34,6 +34,11 @@ class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
     await _loadPledgedGifts(); // Refresh the list
   }
 
+  Future<void> _purchaseGift(String giftId) async {
+    await _controller.purchaseGift(giftId); // Unpledge the gift
+    await _loadPledgedGifts(); // Refresh the list
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,6 +53,7 @@ class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
         itemBuilder: (context, index) {
           final gift = _pledgedGifts![index];
           return Card(
+            color: gift.status == "Pledged" ? Colors.green[100] : Colors.red[100],
             elevation: 3,
             margin: const EdgeInsets.all(8.0),
             child: ListTile(
@@ -65,11 +71,24 @@ class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
                     style: TextStyle(color: Colors.green, fontSize: 16),
                   ),
                   SizedBox(width: 10),
-                  IconButton(
-                    icon: Icon(Icons.undo, color: Colors.red),
-                    tooltip: "Unpledge",
-                    onPressed: () => _unpledgeGift(gift.id),
-                  ),
+
+
+                  // Unpledge Icon (if the gift isn't Purchased)
+                  if (gift.status != "Purchased")
+                    IconButton(
+                      icon: Icon(Icons.undo, color: Colors.red),
+                      tooltip: "Unpledge",
+                      onPressed: () => _unpledgeGift(gift.id),
+                    ),
+
+                  // Purchase Icon (if the gift isn't Purchased)
+                  if (gift.status != "Purchased")
+                    IconButton(
+                      icon: Icon(Icons.shopping_cart, color: Colors.blue),
+                      tooltip: "Purchase",
+                      onPressed: () => _purchaseGift(gift.id), // Add your purchase logic
+                    ),
+
                 ],
               ),
             ),

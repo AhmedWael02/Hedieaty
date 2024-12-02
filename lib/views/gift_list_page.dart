@@ -72,6 +72,11 @@ class _GiftListPageState extends State<GiftListPage> {
     await _loadGifts(); // Reload gifts after unpledging
   }
 
+  Future<void> _purchaseGift(String id) async {
+    await _controller.purchaseGift(id);
+    await _loadGifts(); // Reload gifts after unpledging
+  }
+
 
 
   @override
@@ -104,11 +109,16 @@ class _GiftListPageState extends State<GiftListPage> {
         itemBuilder: (context, index) {
           final gift = _gifts![index];
           return Card(
-            color: gift.status == "Pledged" ? Colors.green[100] : null,
+              color: gift.status == "Pledged"
+                  ? Colors.green[100]
+                  : gift.status == "Purchased"
+                  ? Colors.red[100]
+                  : null,
             child: ListTile(
               title: Text(gift.name),
               subtitle: Text("${gift.category} - \$${gift.price.toStringAsFixed(2)}"),
-              trailing: PopupMenuButton<String>(
+              trailing: gift.status != "Purchased"
+                ? PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == "Edit") {
                     _editGift(gift); // Uncomment when GiftDetailsPage is implemented
@@ -121,11 +131,13 @@ class _GiftListPageState extends State<GiftListPage> {
                     _pledgeGift(gift.id);
                   } else if (value == "Unpledge") {
                     _unpledgeGift(gift.id);
+                  } else if (value == "Purchase") {
+                    _purchaseGift(gift.id);
                   }
 
                 },
                 itemBuilder: (context) => [
-                  if (widget.pledgerId == null && gift.status != "Pledged") ...[
+                  if (widget.pledgerId == null && (gift.status != "Pledged" && gift.status != "Purchased")) ...[
                   PopupMenuItem(
                     value: "Edit",
                     child: Text("Edit"),
@@ -135,7 +147,7 @@ class _GiftListPageState extends State<GiftListPage> {
                     child: Text("Delete"),
                   ),
               ],
-                  if (widget.pledgerId != null && gift.status != "Pledged")
+                  if (widget.pledgerId != null && (gift.status != "Pledged" && gift.status != "Purchased"))
                     PopupMenuItem(
                       value: "Pledge",
                       child: Text("Pledge"),
@@ -148,9 +160,15 @@ class _GiftListPageState extends State<GiftListPage> {
                       value: "Unpledge",
                       child: Text("Unpledge"),
                     ),
+                  if (gift.status == "Pledged" && widget.pledgerId != null && gift.pledgedBy == widget.pledgerId)
+                    PopupMenuItem(
+                      value: "Purchase",
+                      child: Text("Purchase"),
+                    ),
                 ],
 
-              ),
+              )
+                  : null,
             ),
           );
         },
