@@ -1,9 +1,9 @@
-import '../models/user.dart';
-import 'database_helper.dart';
+import 'package:hedieaty/models/user.dart';
+import 'sqlite_database_helper.dart';
 import 'dart:convert'; // For utf8.encode
 import 'package:crypto/crypto.dart'; // For sha256
 
-class UserController {
+class SqliteUserController {
 
   final DatabaseHelper _dbHelper = DatabaseHelper();
 

@@ -1,7 +1,7 @@
-import '../models/gift.dart';
-import 'database_helper.dart';
+import 'package:hedieaty/models/gift.dart';
+import 'sqlite_database_helper.dart';
 
-class GiftController {
+class SqliteGiftController {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
 

@@ -1,8 +1,8 @@
-import '../models/friend.dart';
-import '../models/user.dart';
-import 'database_helper.dart';
+import 'package:hedieaty/models/friend.dart';
+import 'package:hedieaty/models/user.dart';
+import 'sqlite_database_helper.dart';
 
-class FriendController {
+class SqliteFriendController {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   Future<List<Friend>> getFriendsByUserId(String userId) async {
