@@ -121,6 +121,32 @@ class DatabaseHelper {
     return await db.query('Events', where: 'userId = ?', whereArgs: [userId]);
   }
 
+  // Get Event by ID
+  Future<Map<String, dynamic>?> getEventById(String eventId) async {
+    final db = await database;
+    final result = await db.query(
+      'Events',
+      where: 'id = ?',
+      whereArgs: [eventId],
+    );
+
+    return result.isNotEmpty ? result.first : null;
+  }
+
+
+
+  Future<List<Map<String, dynamic>>> getUnpublishedEventsByUserId(String userId) async {
+    final db = await database;
+    return await db.query(
+      'Events',
+      where: 'userId = ? AND isPublished = ?',
+      whereArgs: [userId, 0], // Match events where userId matches and isPublished is 0
+    );
+  }
+
+
+
+
 // Insert Gift
   Future<int> insertGift(Map<String, dynamic> gift) async {
     final db = await database;
