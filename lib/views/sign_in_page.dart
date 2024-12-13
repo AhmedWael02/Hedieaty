@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../controllers/user_controller.dart';
+import '../controllers/sqlite_controllers//sqlite_user_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../controllers/firestore_controllers/firetore_user_controller.dart';
 
 class SignInPage extends StatefulWidget {
   @override
@@ -7,30 +9,40 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final UserController _userController = UserController();
+  final SqliteUserController _sqliteUserController = SqliteUserController();
+  final FirestoreUserController _firestoreUserController = FirestoreUserController();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Asynchronous sign-in method
+
   void _signIn() async {
     if (_formKey.currentState!.validate()) {
       String email = _emailController.text;
       String password = _passwordController.text;
 
-      // Use the updated sign-in logic
-      String? userId = await _userController.signIn(email, password);
 
-      if (userId != null) {
-        // Navigate to the home page on successful sign-in, passing userId
-        Navigator.pushReplacementNamed(context, '/homePage', arguments: userId);
+      try {
+        final userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: email, password: password);
+
+        // Fetch user data from Firestore
+        final userData = await _firestoreUserController.getUser(userCredential.user!.uid);
+
+        if (userData != null) {
+          Navigator.pushReplacementNamed(context, '/homePage',
+              arguments: userCredential.user!.uid);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Sign-in successful!")),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("User data not found.")),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Sign-in successful!")),
-        );
-      } else {
-        // Display an error message for invalid credentials
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Invalid email or password")),
+          SnackBar(content: Text("Sign-in failed: $e")),
         );
       }
     }

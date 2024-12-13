@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../controllers/user_controller.dart';
+import '../controllers/sqlite_controllers//sqlite_user_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../controllers/firestore_controllers/firetore_user_controller.dart';
+
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -7,7 +10,8 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final UserController _userController = UserController();
+  final SqliteUserController _sqliteUserController = SqliteUserController();
+  final FirestoreUserController _firestoreUserController = FirestoreUserController();
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
@@ -23,30 +27,35 @@ class _SignUpPageState extends State<SignUpPage> {
       String email = _emailController.text;
       String password = _passwordController.text;
       String name = _nameController.text;
-      String phone = _phoneController.text;
+      String phoneNumber = _phoneController.text;
 
-      // Call the updated sign-up method
-      bool isSignedUp = await _userController.signUp(
-        email,
-        password,
-        name,
-        phone,
-        _themePreference,
-        _notificationsEnabled,
-      );
 
-      if (isSignedUp) {
+      try {
+        final userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+
+        // Save user data to Firestore
+        await _firestoreUserController.addOrUpdateUser(userCredential.user!.uid, {
+          'email': email,
+          'name': name,
+          'phoneNumber': phoneNumber,
+          'notificationsEnabled': true,
+          'themePreference': 'Light Mode',
+        });
+
+        Navigator.pushReplacementNamed(context, '/signIn');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Sign-up successful!")),
         );
-        Navigator.pushReplacementNamed(context, '/signIn');
-      } else {
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Sign-up failed. Please try again.")),
+          SnackBar(content: Text("Sign-up failed: $e")),
         );
       }
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
