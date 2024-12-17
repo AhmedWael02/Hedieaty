@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For date formatting
-import '../controllers/event_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_event_controller.dart';
 import '../models/event.dart';
 
 class EventDetailsPage extends StatefulWidget {
@@ -16,7 +16,7 @@ class EventDetailsPage extends StatefulWidget {
 
 class _EventDetailsPageState extends State<EventDetailsPage> {
   final _formKey = GlobalKey<FormState>();
-  final EventController _controller = EventController();
+  final SqliteEventController _sqliteEventController = SqliteEventController();
 
   late TextEditingController _nameController;
   late TextEditingController _categoryController;
@@ -39,7 +39,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
   Future<void> _saveEvent() async {
     if (_formKey.currentState!.validate()) {
-      final newEvent = Event(
+      final updatedEvent = Event(
         id: widget.event?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         category: _categoryController.text,
@@ -47,23 +47,25 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         description: _descriptionController.text,
         date: _selectedDate,
         status: _status,
-        creatorId: widget.event?.creatorId ?? widget.userId, // Retain existing creatorId or use userId
+        creatorId: widget.event?.creatorId ?? widget.userId,
+        isPublished: widget.event?.isPublished ?? false,
       );
 
-      // Save or update the event using the controller
       if (widget.event == null) {
-        await _controller.addEvent(newEvent);
+        await _sqliteEventController.addEvent(updatedEvent);
       } else {
-        await _controller.updateEvent(newEvent);
+        await _sqliteEventController.updateEvent(updatedEvent);
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Event ${widget.event == null ? "added" : "updated"} successfully!")),
       );
 
-      Navigator.pop(context);
+      Navigator.pop(context, true); // Indicate changes were made
     }
   }
+
+
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -183,10 +185,12 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                     ),
                     OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(context, false); // Indicate no changes
                       },
                       child: Text("Cancel"),
                     ),
+
+
                   ],
                 )
               ],
