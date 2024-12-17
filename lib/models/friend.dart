@@ -1,13 +1,13 @@
 class Friend {
   final String id;
-  final String name;
+  String name;
   final String profileUrl;
-  final int upcomingEvents;
+  int upcomingEvents;
 
   Friend({
     required this.id,
     required this.name,
     required this.profileUrl,
-    required this.upcomingEvents,
+    this.upcomingEvents =0,
   });
 }
