@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../controllers/gift_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_gift_controller.dart';
 import '../models/gift.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../controllers/firestore_controllers/firestore_gift_controller.dart';
 
 class GiftDetailsPage extends StatefulWidget {
   final String eventId; // ID of the event this gift belongs to
@@ -14,7 +16,8 @@ class GiftDetailsPage extends StatefulWidget {
 
 class _GiftDetailsPageState extends State<GiftDetailsPage> {
   final _formKey = GlobalKey<FormState>();
-  final GiftController _controller = GiftController();
+  final SqliteGiftController _sqliteGiftController = SqliteGiftController();
+  final FirestoreGiftController _firestoreGiftController = FirestoreGiftController();
 
   // Controllers for form fields
   late TextEditingController _nameController;
@@ -31,11 +34,12 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
     _nameController = TextEditingController(text: widget.gift?.name ?? "");
     _descriptionController = TextEditingController(text: widget.gift?.description ?? "");
     _categoryController = TextEditingController(text: widget.gift?.category ?? "");
-    _priceController = TextEditingController(text: widget.gift?.price.toString() ?? "");
+    _priceController = TextEditingController(
+        text: widget.gift != null ? widget.gift!.price.toStringAsFixed(2) : "");
     _status = widget.gift?.status ?? "Available";
   }
 
-  Future<void> _saveGift() async {
+/*  Future<void> _saveGift() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -62,6 +66,63 @@ class _GiftDetailsPageState extends State<GiftDetailsPage> {
           SnackBar(content: Text("Gift ${widget.gift == null ? "added" : "updated"} successfully!")),
         );
 
+        Navigator.pop(context); // Return to the previous page
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save gift. Please try again.")),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }*/
+
+  Future<void> _saveGift() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final newGift = Gift(
+        id: widget.gift?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        eventId: widget.eventId,
+        name: _nameController.text,
+        description: _descriptionController.text,
+        category: _categoryController.text,
+        price: double.tryParse(_priceController.text) ?? 0.0,
+        status: _status,
+      );
+
+
+      final giftData = {
+        'eventId': widget.eventId,
+        'name': _nameController.text,
+        'description': _descriptionController.text,
+        'category': _categoryController.text,
+        'price': double.tryParse(_priceController.text) ?? 0.0,
+        'status': _status,
+        'pledgedByUserId': widget.gift?.pledgedBy, // Keep pledger info if editing
+      };
+
+      try {
+        if (widget.gift == null) {
+          // Add a new gift
+          await FirebaseFirestore.instance.collection('Gifts').add(giftData);
+          await _sqliteGiftController.addGift(newGift);
+        } else {
+          // Update existing gift
+          await FirebaseFirestore.instance
+              .collection('Gifts')
+              .doc(widget.gift!.id)
+              .set(giftData, SetOptions(merge: true));
+          await _sqliteGiftController.updateGift(newGift);
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gift ${widget.gift == null ? "added" : "updated"} successfully!")),
+        );
         Navigator.pop(context); // Return to the previous page
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(

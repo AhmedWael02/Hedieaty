@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../controllers/gift_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_gift_controller.dart';
 import '../models/gift.dart';
 import '../models/event.dart';
-import 'gift_details_page.dart'; // Uncomment this when Gift Details Page is ready
+import 'gift_details_page.dart';
+import '../controllers/firestore_controllers/firestore_gift_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GiftListPage extends StatefulWidget {
   final Event event; // The selected event
@@ -16,7 +18,8 @@ class GiftListPage extends StatefulWidget {
 }
 
 class _GiftListPageState extends State<GiftListPage> {
-  final GiftController _controller = GiftController();
+  final SqliteGiftController _sqliteGiftController = SqliteGiftController();
+  final FirestoreGiftController _firestoreGiftController = FirestoreGiftController();
   List<Gift>? _gifts; // Null indicates loading
   String _sortCriteria = "Name";
 
@@ -27,19 +30,54 @@ class _GiftListPageState extends State<GiftListPage> {
     _loadGifts(); // Load gifts when the page initializes
   }
 
-  Future<void> _loadGifts() async {
+/*  Future<void> _loadGifts() async {
     List<Gift> gifts = await _controller.sortGiftsForEvent(widget.event.id, _sortCriteria);
     setState(() {
       _gifts = gifts;
     });
+  }*/
+
+  Future<void> _loadGifts() async {
+    final giftsData = await _firestoreGiftController.getGifts(widget.event.id);
+    setState(() {
+      _gifts = giftsData.map((data) {
+        return Gift(
+          id: data['id'],
+          eventId: data['eventId'],
+          name: data['name'],
+          description: data['description'],
+          category: data['category'],
+          price: data['price'],
+          status: data['status'],
+          pledgedBy: data['pledgedByUserId'],
+        );
+      }).toList();
+    });
   }
 
-  Future<void> _sortGifts(String criteria) async {
+
+/*  Future<void> _sortGifts(String criteria) async {
     setState(() {
       _sortCriteria = criteria;
     });
     await _loadGifts(); // Reload gifts after sorting
+  }*/
+
+  Future<void> _sortGifts(String criteria) async {
+    setState(() {
+      _sortCriteria = criteria;
+
+      if (criteria == "Name") {
+        _gifts!.sort((a, b) => a.name.compareTo(b.name));
+      } else if (criteria == "Category") {
+        _gifts!.sort((a, b) => a.category.compareTo(b.category));
+      } else if (criteria == "Status") {
+        _gifts!.sort((a, b) => a.status.compareTo(b.status));
+      }
+    });
   }
+
+
 
   Future<void> _addGift() async {
     await Navigator.push(
@@ -55,27 +93,73 @@ class _GiftListPageState extends State<GiftListPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GiftDetailsPage(gift: gift, eventId: widget.event.id),
+        builder: (context) => GiftDetailsPage(eventId: widget.event.id, gift: gift),
       ),
     );
     await _loadGifts(); // Reload gifts after editing
   }
 
 
-  Future<void> _pledgeGift(String id) async {
-    await _controller.pledgeGift(id, widget.pledgerId!); // Pass the signed-in user's ID
-    await _loadGifts(); // Reload gifts after pledging
+
+
+  Future<void> _pledgeGift(String giftId) async {
+    try {
+      // Update the gift in Firestore
+      await FirebaseFirestore.instance.collection('Gifts').doc(giftId).update({
+        'status': 'Pledged',
+        'pledgedByUserId': widget.pledgerId, // Update the pledgedByUserId
+      });
+
+      // Update the gift in SQLite
+      await _sqliteGiftController.pledgeGift(giftId, widget.pledgerId!);
+
+      // Reload the gift list to reflect changes
+      await _loadGifts();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gift pledged successfully!")),
+      );
+    } catch (e) {
+      print("Error pledging gift: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to pledge gift. Please try again.")),
+      );
+    }
   }
 
-  Future<void> _unpledgeGift(String id) async {
-    await _controller.unpledgeGift(id);
-    await _loadGifts(); // Reload gifts after unpledging
+
+  Future<void> _purchaseGift(String giftId) async {
+    await _sqliteGiftController.purchaseGift(giftId);
+    await FirebaseFirestore.instance
+        .collection('Gifts')
+        .doc(giftId)
+        .update({'status': 'Purchased'});
+    await _loadGifts(); // Reload gifts after purchasing
   }
 
-  Future<void> _purchaseGift(String id) async {
-    await _controller.purchaseGift(id);
-    await _loadGifts(); // Reload gifts after unpledging
+  Future<void> _unpledgeGift(String giftId) async {
+    try {
+      await FirebaseFirestore.instance.collection('Gifts').doc(giftId).update({
+        'status': 'Available',
+        'pledgedByUserId': null, // Clear the pledgedByUserId
+      });
+
+      await _sqliteGiftController.unpledgeGift(giftId);
+
+      await _loadGifts();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gift unpledged successfully!")),
+      );
+    } catch (e) {
+      print("Error unpledging gift: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to unpledge gift. Please try again.")),
+      );
+    }
   }
+
+
 
 
 
@@ -109,22 +193,23 @@ class _GiftListPageState extends State<GiftListPage> {
         itemBuilder: (context, index) {
           final gift = _gifts![index];
           return Card(
-              color: gift.status == "Pledged"
-                  ? Colors.green[100]
-                  : gift.status == "Purchased"
-                  ? Colors.red[100]
-                  : null,
+            color: gift.status == "Pledged"
+                ? Colors.green[100]
+                : gift.status == "Purchased"
+                ? Colors.red[100]
+                : null,
             child: ListTile(
               title: Text(gift.name),
               subtitle: Text("${gift.category} - \$${gift.price.toStringAsFixed(2)}"),
               trailing: gift.status != "Purchased"
-                ? PopupMenuButton<String>(
+                  ? PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == "Edit") {
                     _editGift(gift); // Uncomment when GiftDetailsPage is implemented
                   } else if (value == "Delete") {
                     setState(() {
-                      _controller.deleteGift(gift.id);
+                      _firestoreGiftController.deleteGift(gift.id);
+                      _sqliteGiftController.deleteGift(gift.id);
                       _loadGifts();
                     });
                   } else if (value == "Pledge") {
@@ -138,15 +223,15 @@ class _GiftListPageState extends State<GiftListPage> {
                 },
                 itemBuilder: (context) => [
                   if (widget.pledgerId == null && (gift.status != "Pledged" && gift.status != "Purchased")) ...[
-                  PopupMenuItem(
-                    value: "Edit",
-                    child: Text("Edit"),
-                  ),
-                  PopupMenuItem(
-                    value: "Delete",
-                    child: Text("Delete"),
-                  ),
-              ],
+                    PopupMenuItem(
+                      value: "Edit",
+                      child: Text("Edit"),
+                    ),
+                    PopupMenuItem(
+                      value: "Delete",
+                      child: Text("Delete"),
+                    ),
+                  ],
                   if (widget.pledgerId != null && (gift.status != "Pledged" && gift.status != "Purchased"))
                     PopupMenuItem(
                       value: "Pledge",
