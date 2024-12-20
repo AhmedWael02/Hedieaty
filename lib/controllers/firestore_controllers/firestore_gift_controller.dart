@@ -41,7 +41,6 @@ class FirestoreGiftController {
         );
       }).toList();
     } catch (e) {
-      print("Error fetching pledged gifts: $e");
       return [];
     }
   }

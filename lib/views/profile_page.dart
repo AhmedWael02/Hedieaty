@@ -3,13 +3,11 @@ import '../controllers/sqlite_controllers/sqlite_user_controller.dart';
 import '../controllers/firestore_controllers/firetore_user_controller.dart';
 import '../controllers/firestore_controllers/firestore_event_controller.dart';
 import '../models/user.dart';
-import '../controllers/sqlite_controllers/sqlite_event_controller.dart';
 import '../models/event.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfilePage extends StatefulWidget {
-
-  final String userId; // Pass the signed-in user ID
+  final String userId;
 
   ProfilePage({required this.userId});
 
@@ -19,7 +17,6 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final SqliteUserController _sqliteUserController = SqliteUserController();
-  final SqliteEventController _sqliteEventController = SqliteEventController();
   final FirestoreUserController _firestoreUserController = FirestoreUserController();
   final FirestoreEventController _firestoreEventController = FirestoreEventController();
 
@@ -30,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late bool _notificationsEnabled;
 
   User? _currentUser;
-  List<Event>? _userEvents; // Null indicates data is still loading
+  List<Event>? _userEvents;
 
   @override
   void initState() {
@@ -41,7 +38,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserData() async {
     try {
-      // Fetch user data from Firestore
       final userData = await _firestoreUserController.getUser(widget.userId);
 
       if (userData != null) {
@@ -51,7 +47,7 @@ class _ProfilePageState extends State<ProfilePage> {
             name: userData['name'] ?? '',
             email: userData['email'] ?? '',
             phoneNumber: userData['phoneNumber'] ?? '',
-            password: '', // Firestore doesn't store the password
+            password: '',
             themePreference: userData['themePreference'] ?? 'Light Mode',
             notificationsEnabled: userData['notificationsEnabled'] ?? true,
           );
@@ -72,12 +68,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-
-
   Future<void> _loadUserEvents() async {
     List<Event> events = [];
-    final eventsData = await _firestoreEventController.getEvents(
-        widget.userId);
+    final eventsData = await _firestoreEventController.getEvents(widget.userId);
     setState(() {
       events = eventsData.map((data) {
         return Event(
@@ -91,7 +84,6 @@ class _ProfilePageState extends State<ProfilePage> {
           creatorId: data['creatorId'],
         );
       }).toList();
-      // _events.sort((a, b) => a.name.compareTo(b.name));
     });
     setState(() {
       _userEvents = events;
@@ -101,18 +93,16 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _saveChanges() async {
     if (_currentUser != null) {
       try {
-        // Update the current user object
         _currentUser = User(
           id: _currentUser!.id,
           name: _nameController.text,
           email: _emailController.text,
           phoneNumber: _phoneController.text,
-          password: _currentUser!.password, // Password remains unchanged
+          password: _currentUser!.password,
           themePreference: _selectedTheme,
           notificationsEnabled: _notificationsEnabled,
         );
 
-        // Prepare data for Firestore
         final userData = {
           'name': _currentUser!.name,
           'email': _currentUser!.email,
@@ -121,7 +111,6 @@ class _ProfilePageState extends State<ProfilePage> {
           'notificationsEnabled': _currentUser!.notificationsEnabled,
         };
 
-        // Save changes to Firestore
         await _firestoreUserController.addOrUpdateUser(_currentUser!.id, userData);
         await _sqliteUserController.editUser(_currentUser!);
 
@@ -129,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
           SnackBar(content: Text("Profile updated successfully!")),
         );
 
-        setState(() {}); // Refresh UI if needed
+        setState(() {});
       } catch (e) {
         print("Error saving user changes: $e");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,140 +128,187 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     if (_currentUser == null) {
-      return Center(child: CircularProgressIndicator());
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
     return Scaffold(
       appBar: AppBar(
         title: Text("My Profile"),
+        backgroundColor: Colors.blue.shade200,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Personal Information",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 12),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: "Name"),
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade200, Colors.purple.shade300],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-            SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: "Email"),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            SizedBox(height: 12),
-            TextField(
-              controller: _phoneController,
-              decoration: InputDecoration(labelText: "Phone Number"),
-              keyboardType: TextInputType.phone,
-            ),
-            SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _selectedTheme,
-              decoration: InputDecoration(labelText: "Theme Preference"),
-              items: ["Light Mode", "Dark Mode"]
-                  .map((theme) => DropdownMenuItem(
-                value: theme,
-                child: Text(theme),
-              ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedTheme = value!;
-                  _updateTheme();
-                });
-              },
-            ),
-            SizedBox(height: 12),
-            SwitchListTile(
-              title: Text("Enable Notifications"),
-              value: _notificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _notificationsEnabled = value;
-                });
-              },
-              secondary: Icon(_notificationsEnabled
-                  ? Icons.notifications_active
-                  : Icons.notifications_off),
-            ),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _saveChanges,
-              child: Text("Save Changes"),
-            ),
-
-            Divider(height: 40),
-            Text("My Created Events",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 12),
-            _userEvents == null
-                ? Center(child: CircularProgressIndicator())
-                : _userEvents!.isNotEmpty
-                ? ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: _userEvents!.length,
-              itemBuilder: (context, index) {
-                final event = _userEvents![index];
-                return Card(
-                  child: ListTile(
-                    title: Text(event.name),
-                    subtitle: Text(
-                        "Category: ${event.category} - Status: ${event.status}"),
-                    trailing: Icon(Icons.arrow_forward),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/giftList',
-                        arguments: {
-                          'event': event,
-                          'userId': widget.userId,
-                        },
-                      );
-                    },
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Personal Information",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                SizedBox(height: 12),
+                TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: "Name",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                );
-              },
-            )
-                : Center(child: Text("You have not created any events yet.")),
-            SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/pledgedGifts',
-                  arguments: widget.userId,
-                );
-              },
-              icon: Icon(Icons.card_giftcard),
-              label: Text("View My Pledged Gifts"),
-            )
+                ),
+                SizedBox(height: 12),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                SizedBox(height: 12),
+                TextField(
+                  controller: _phoneController,
+                  decoration: InputDecoration(
+                    labelText: "Phone Number",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  keyboardType: TextInputType.phone,
+                ),
+                SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _selectedTheme,
+                  decoration: InputDecoration(
+                    labelText: "Theme Preference",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  items: ["Light Mode", "Dark Mode"]
+                      .map((theme) => DropdownMenuItem(
+                    value: theme,
+                    child: Text(theme),
+                  ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTheme = value!;
+                    });
+                  },
+                ),
+                SizedBox(height: 12),
+                SwitchListTile(
+                  title: Text("Enable Notifications"),
+                  value: _notificationsEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _notificationsEnabled = value;
+                    });
+                  },
+                  secondary: Icon(_notificationsEnabled
+                      ? Icons.notifications_active
+                      : Icons.notifications_off),
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _saveChanges,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    backgroundColor: Colors.green,
+                  ),
+                  child: Text("Save Changes"),
+                ),
 
-
-          ],
-        ),
+                Divider(height: 40),
+                Text("My Created Events",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                SizedBox(height: 12),
+                _userEvents == null
+                    ? Center(child: CircularProgressIndicator())
+                    : _userEvents!.isNotEmpty
+                    ? ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: _userEvents!.length,
+                  itemBuilder: (context, index) {
+                    final event = _userEvents![index];
+                    return Card(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        title: Text(event.name),
+                        subtitle: Text(
+                            "Category: ${event.category} - Status: ${event.status}"),
+                        trailing: Icon(Icons.arrow_forward),
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/giftList',
+                            arguments: {
+                              'event': event,
+                              'userId': widget.userId,
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  },
+                )
+                    : Center(
+                  child: Text(
+                    "You have not created any events yet.",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+                SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/pledgedGifts',
+                      arguments: widget.userId,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  ),
+                  icon: Icon(Icons.card_giftcard, color: Colors.black),
+                  label: Text(
+                    "View My Pledged Gifts",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  void _updateTheme() {
-    if (_selectedTheme == "Dark Mode") {
-      // Switch to dark theme
-      ThemeMode.dark;
-    } else {
-      // Switch to light theme
-      ThemeMode.light;
-    }
-  }
-
 }

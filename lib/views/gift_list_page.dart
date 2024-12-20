@@ -26,16 +26,8 @@ class _GiftListPageState extends State<GiftListPage> {
   @override
   void initState() {
     super.initState();
-    // Fetch gifts specific to the selected event
-    _loadGifts(); // Load gifts when the page initializes
+    _loadGifts();
   }
-
-/*  Future<void> _loadGifts() async {
-    List<Gift> gifts = await _controller.sortGiftsForEvent(widget.event.id, _sortCriteria);
-    setState(() {
-      _gifts = gifts;
-    });
-  }*/
 
   Future<void> _loadGifts() async {
     final giftsData = await _firestoreGiftController.getGifts(widget.event.id);
@@ -55,14 +47,6 @@ class _GiftListPageState extends State<GiftListPage> {
     });
   }
 
-
-/*  Future<void> _sortGifts(String criteria) async {
-    setState(() {
-      _sortCriteria = criteria;
-    });
-    await _loadGifts(); // Reload gifts after sorting
-  }*/
-
   Future<void> _sortGifts(String criteria) async {
     setState(() {
       _sortCriteria = criteria;
@@ -77,8 +61,6 @@ class _GiftListPageState extends State<GiftListPage> {
     });
   }
 
-
-
   Future<void> _addGift() async {
     await Navigator.push(
       context,
@@ -86,7 +68,7 @@ class _GiftListPageState extends State<GiftListPage> {
         builder: (context) => GiftDetailsPage(eventId: widget.event.id),
       ),
     );
-    await _loadGifts(); // Reload gifts after adding
+    await _loadGifts();
   }
 
   Future<void> _editGift(Gift gift) async {
@@ -96,24 +78,18 @@ class _GiftListPageState extends State<GiftListPage> {
         builder: (context) => GiftDetailsPage(eventId: widget.event.id, gift: gift),
       ),
     );
-    await _loadGifts(); // Reload gifts after editing
+    await _loadGifts();
   }
-
-
-
 
   Future<void> _pledgeGift(String giftId) async {
     try {
-      // Update the gift in Firestore
       await FirebaseFirestore.instance.collection('Gifts').doc(giftId).update({
         'status': 'Pledged',
-        'pledgedByUserId': widget.pledgerId, // Update the pledgedByUserId
+        'pledgedByUserId': widget.pledgerId,
       });
 
-      // Update the gift in SQLite
       await _sqliteGiftController.pledgeGift(giftId, widget.pledgerId!);
 
-      // Reload the gift list to reflect changes
       await _loadGifts();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,21 +103,20 @@ class _GiftListPageState extends State<GiftListPage> {
     }
   }
 
-
   Future<void> _purchaseGift(String giftId) async {
     await _sqliteGiftController.purchaseGift(giftId);
     await FirebaseFirestore.instance
         .collection('Gifts')
         .doc(giftId)
         .update({'status': 'Purchased'});
-    await _loadGifts(); // Reload gifts after purchasing
+    await _loadGifts();
   }
 
   Future<void> _unpledgeGift(String giftId) async {
     try {
       await FirebaseFirestore.instance.collection('Gifts').doc(giftId).update({
         'status': 'Available',
-        'pledgedByUserId': null, // Clear the pledgedByUserId
+        'pledgedByUserId': null,
       });
 
       await _sqliteGiftController.unpledgeGift(giftId);
@@ -159,110 +134,141 @@ class _GiftListPageState extends State<GiftListPage> {
     }
   }
 
-
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("${widget.event.name} Gifts"),
+        backgroundColor: Colors.blue.shade200,
         actions: [
           DropdownButton<String>(
             value: _sortCriteria,
+            icon: Icon(Icons.sort, color: Colors.white),
+            dropdownColor: Colors.blue.shade200,
+            onChanged: (value) {
+              if (value != null) {
+                _sortGifts(value);
+              }
+            },
             items: ["Name", "Category", "Status"]
                 .map((criteria) => DropdownMenuItem(
               value: criteria,
               child: Text(criteria),
             ))
                 .toList(),
-            onChanged: (value) {
-              if (value != null) {
-                _sortGifts(value);
-              }
-            },
           ),
         ],
       ),
-      body: _gifts == null
-          ? Center(child: CircularProgressIndicator()) // Show loader while fetching gifts
-          : _gifts!.isNotEmpty
-          ? ListView.builder(
-        itemCount: _gifts!.length,
-        itemBuilder: (context, index) {
-          final gift = _gifts![index];
-          return Card(
-            color: gift.status == "Pledged"
-                ? Colors.green[100]
-                : gift.status == "Purchased"
-                ? Colors.red[100]
-                : null,
-            child: ListTile(
-              title: Text(gift.name),
-              subtitle: Text("${gift.category} - \$${gift.price.toStringAsFixed(2)}"),
-              trailing: gift.status != "Purchased"
-                  ? PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == "Edit") {
-                    _editGift(gift); // Uncomment when GiftDetailsPage is implemented
-                  } else if (value == "Delete") {
-                    setState(() {
-                      _firestoreGiftController.deleteGift(gift.id);
-                      _sqliteGiftController.deleteGift(gift.id);
-                      _loadGifts();
-                    });
-                  } else if (value == "Pledge") {
-                    _pledgeGift(gift.id);
-                  } else if (value == "Unpledge") {
-                    _unpledgeGift(gift.id);
-                  } else if (value == "Purchase") {
-                    _purchaseGift(gift.id);
-                  }
-
-                },
-                itemBuilder: (context) => [
-                  if (widget.pledgerId == null && (gift.status != "Pledged" && gift.status != "Purchased")) ...[
-                    PopupMenuItem(
-                      value: "Edit",
-                      child: Text("Edit"),
-                    ),
-                    PopupMenuItem(
-                      value: "Delete",
-                      child: Text("Delete"),
-                    ),
-                  ],
-                  if (widget.pledgerId != null && (gift.status != "Pledged" && gift.status != "Purchased"))
-                    PopupMenuItem(
-                      value: "Pledge",
-                      child: Text("Pledge"),
-                    ),
-
-                  if (gift.status == "Pledged" &&
-                      ((widget.pledgerId != null && gift.pledgedBy == widget.pledgerId) ||
-                          (widget.pledgerId == null && widget.userId == widget.event.creatorId)))
-                    PopupMenuItem(
-                      value: "Unpledge",
-                      child: Text("Unpledge"),
-                    ),
-                  if (gift.status == "Pledged" && widget.pledgerId != null && gift.pledgedBy == widget.pledgerId)
-                    PopupMenuItem(
-                      value: "Purchase",
-                      child: Text("Purchase"),
-                    ),
-                ],
-
-              )
-                  : null,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade200, Colors.purple.shade300],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          );
-        },
-      )
-          : Center(child: Text("No gifts found for this event.")),
+          ),
+          _gifts == null
+              ? Center(child: CircularProgressIndicator())
+              : _gifts!.isNotEmpty
+              ? ListView.builder(
+            itemCount: _gifts!.length,
+            itemBuilder: (context, index) {
+              final gift = _gifts![index];
+              return Card(
+                color: gift.status == "Pledged"
+                    ? Colors.green[100]
+                    : gift.status == "Purchased"
+                    ? Colors.red[100]
+                    : null,
+                margin: const EdgeInsets.all(8.0),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+                  title: Text(
+                    gift.name,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    "${gift.category} - \$${gift.price.toStringAsFixed(2)}",
+                  ),
+                  trailing: gift.status != "Purchased"
+                      ? PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == "Edit") {
+                        _editGift(gift);
+                      } else if (value == "Delete") {
+                        setState(() {
+                          _firestoreGiftController.deleteGift(gift.id);
+                          _sqliteGiftController.deleteGift(gift.id);
+                          _loadGifts();
+                        });
+                      } else if (value == "Pledge") {
+                        _pledgeGift(gift.id);
+                      } else if (value == "Unpledge") {
+                        _unpledgeGift(gift.id);
+                      } else if (value == "Purchase") {
+                        _purchaseGift(gift.id);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (widget.pledgerId == null &&
+                          (gift.status != "Pledged" && gift.status != "Purchased"))
+                        ...[
+                          PopupMenuItem(
+                            value: "Edit",
+                            child: Text("Edit"),
+                          ),
+                          PopupMenuItem(
+                            value: "Delete",
+                            child: Text("Delete"),
+                          ),
+                        ],
+                      if (widget.pledgerId != null &&
+                          (gift.status != "Pledged" && gift.status != "Purchased"))
+                        PopupMenuItem(
+                          value: "Pledge",
+                          child: Text("Pledge"),
+                        ),
+                      if (gift.status == "Pledged" &&
+                          ((widget.pledgerId != null && gift.pledgedBy == widget.pledgerId) ||
+                              (widget.pledgerId == null &&
+                                  widget.userId == widget.event.creatorId)))
+                        PopupMenuItem(
+                          value: "Unpledge",
+                          child: Text("Unpledge"),
+                        ),
+                      if (gift.status == "Pledged" &&
+                          widget.pledgerId != null &&
+                          gift.pledgedBy == widget.pledgerId)
+                        PopupMenuItem(
+                          value: "Purchase",
+                          child: Text("Purchase"),
+                        ),
+                    ],
+                  )
+                      : null,
+                ),
+              );
+            },
+          )
+              : Center(
+            child: Text(
+              "No gifts found for this event.",
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: widget.pledgerId == null
           ? FloatingActionButton(
         onPressed: _addGift,
-        child: Icon(Icons.add),
+        backgroundColor: Colors.amber,
+        child: Icon(Icons.add, color: Colors.black),
       )
           : null,
     );

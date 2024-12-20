@@ -36,7 +36,6 @@ class FirestoreFriendController {
 
       return querySnapshot.size; // Return the count of matching documents
     } catch (e) {
-      print("Error counting upcoming events: $e");
       return 0; // Return 0 in case of an error
     }
   }
@@ -73,7 +72,6 @@ class FirestoreFriendController {
           .where((friend) => friend.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
     } catch (e) {
-      print("Error searching friends: $e");
       return [];
     }
   }

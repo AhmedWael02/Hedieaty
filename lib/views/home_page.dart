@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import '../controllers/sqlite_controllers/sqlite_friend_controller.dart';
-import '../controllers/sqlite_controllers/sqlite_user_controller.dart';
 import '../widgets/friend_list_tile.dart';
 import '../models/friend.dart';
-import '../models/user.dart';
 import '../controllers/firestore_controllers/firestore_friend_controller.dart';
 import '../controllers/firestore_controllers/firetore_user_controller.dart';
 
 class HomePage extends StatefulWidget {
-  final String userId; // Pass the signed-in user's ID
+  final String userId;
 
   HomePage({required this.userId});
 
@@ -16,7 +14,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   final SqliteFriendController _sqliteFriendController = SqliteFriendController();
   final FirestoreFriendController _firestoreFriendController = FirestoreFriendController();
   final FirestoreUserController _firestoreUserController = FirestoreUserController();
@@ -24,10 +22,32 @@ class _HomePageState extends State<HomePage> {
   List<Friend> _filteredFriends = [];
   bool _isLoading = true;
 
+  late AnimationController _animationController;
+  late Animation<double> _fadeInAnimation;
+
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
+
+    _fadeInAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+
+    _animationController.forward();
     _loadFriends();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadFriends() async {
@@ -41,7 +61,7 @@ class _HomePageState extends State<HomePage> {
       _filteredFriends = friendsData.map((data) {
         return Friend(
           id: data['friendId'],
-          name: "Fetching...", // Placeholder
+          name: "Fetching...",
           profileUrl: 'assets/images/placeholder.png',
           upcomingEvents: 0,
         );
@@ -53,7 +73,6 @@ class _HomePageState extends State<HomePage> {
           friend.name = userData['name'];
         }
 
-        // Count upcoming events for each friend
         friend.upcomingEvents = await _firestoreFriendController.countUpcomingEvents(friend.id);
       }
 
@@ -67,16 +86,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-
-
   Future<void> _onSearchChanged(String query) async {
     List<Friend> friends = await _firestoreFriendController.searchFriends(widget.userId, query);
     setState(() {
       _filteredFriends = friends;
     });
   }
-
 
   void _addFriend() {
     final TextEditingController phoneController = TextEditingController();
@@ -106,7 +121,6 @@ class _HomePageState extends State<HomePage> {
                 return;
               }
 
-              // Fetch user by phone number
               final userData = await _firestoreUserController.getUserByPhoneNumber(phoneNumber);
               if (userData == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -115,18 +129,16 @@ class _HomePageState extends State<HomePage> {
                 return;
               }
 
-              // Add friend relationship
               await _firestoreFriendController.addFriend(widget.userId, userData['id']);
               await _sqliteFriendController.addFriend(widget.userId, userData['id']);
 
-              // Reload the friends list
               await _loadFriends();
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("${userData['name']} has been added as a friend!")),
               );
 
-              Navigator.pop(context); // Close the dialog
+              Navigator.pop(context);
             },
             child: Text("Add"),
           ),
@@ -134,8 +146,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-
 
   void _createEvent() {
     Navigator.pushNamed(
@@ -154,7 +164,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _signOut() {
-    // Redirect to Sign In page
     Navigator.pushNamedAndRemoveUntil(context, '/signIn', (route) => false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("You have been signed out.")),
@@ -165,57 +174,93 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hedieaty'),
+        title: Text("Hedieaty"),
+        backgroundColor: Colors.blue.shade300,
         actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: _addFriend,
-          ),
           IconButton(
             icon: Icon(Icons.person),
             onPressed: _viewProfile,
           ),
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: _signOut, // Sign out logic
+            onPressed: _signOut,
           ),
         ],
       ),
       body: Stack(
         children: [
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search friends...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade200, Colors.purple.shade300],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FadeTransition(
+                    opacity: _fadeInAnimation,
+                    child: Text(
+                      "Welcome to Hedieaty",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                    prefixIcon: Icon(Icons.search),
                   ),
-                  onChanged: _onSearchChanged,
-                ),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search friends...',
+                      filled: true,
+                      fillColor: Colors.white,
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    onChanged: _onSearchChanged,
+                  ),
+                  SizedBox(height: 20),
+                  Expanded(
+                    child: _isLoading
+                        ? Center(child: CircularProgressIndicator())
+                        : _filteredFriends.isNotEmpty
+                        ? ListView.builder(
+                      itemCount: _filteredFriends.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          elevation: 4,
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: FriendListTile(
+                            friend: _filteredFriends[index],
+                            userId: widget.userId,
+                          ),
+                        );
+                      },
+                    )
+                        : Center(
+                      child: Text(
+                        "No friends found.",
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: _isLoading
-                    ? Center(child: CircularProgressIndicator())
-                    : _filteredFriends.isNotEmpty
-                    ? ListView.builder(
-                  itemCount: _filteredFriends.length,
-                  itemBuilder: (context, index) {
-                    return FriendListTile(friend: _filteredFriends[index],userId: widget.userId,);
-                  },
-                )
-                    : Center(child: Text("No friends found.")),
-              ),
-            ],
+            ),
           ),
           Positioned(
             bottom: 20,
-            left: MediaQuery.of(context).size.width * 0.5 - 40,
+            left: 20,
             child: FloatingActionButton.extended(
               backgroundColor: Colors.amber,
               onPressed: _createEvent,
@@ -224,6 +269,15 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(color: Colors.black),
               ),
               icon: Icon(Icons.create, color: Colors.black),
+            ),
+          ),
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: FloatingActionButton(
+              onPressed: _addFriend,
+              backgroundColor: Colors.amber,
+              child: Icon(Icons.person_add, color: Colors.black),
             ),
           ),
         ],

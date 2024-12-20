@@ -104,7 +104,6 @@ class SqliteUserController {
       }
       return null; // Return null if no match
     } catch (e) {
-      print("Error during sign-in: $e");
       return null; // Handle error case
     }
   }
@@ -135,7 +134,6 @@ class SqliteUserController {
         await saveUser(newUser);
         return true; // Sign-up successful
       } catch (e) {
-        print("Error during sign-up: $e");
         return false; // Sign-up failed
       }
     }

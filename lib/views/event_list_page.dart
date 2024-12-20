@@ -93,7 +93,6 @@ class _EventListPageState extends State<EventListPage> {
 
 
 
-
   Future<void> _sortEvents(String criteria) async {
     if (widget.pledgerId == null) {
       setState(() {
@@ -159,10 +158,10 @@ class _EventListPageState extends State<EventListPage> {
 
 
   Future<void> _deleteEvent(String id) async {
-      await _sqliteEventController.deleteEvent(id);
-      await FirebaseFirestore.instance.collection('Events').doc(id).delete();
-      await _loadEvents(); // Reload events after deletion
-    }
+    await _sqliteEventController.deleteEvent(id);
+    await FirebaseFirestore.instance.collection('Events').doc(id).delete();
+    await _loadEvents(); // Reload events after deletion
+  }
 
 
   Future<void> _publishEvent(String eventId) async {
@@ -233,111 +232,126 @@ class _EventListPageState extends State<EventListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Event List"),
+        backgroundColor: Colors.blue.shade200,
         actions: [
           DropdownButton<String>(
             value: _sortCriteria,
+            icon: Icon(Icons.sort, color: Colors.white),
+            dropdownColor: Colors.blue.shade200,
+            onChanged: (value) {
+              if (value != null) {
+                _sortEvents(value);
+              }
+            },
             items: ["Name", "Category", "Status"]
                 .map((criteria) => DropdownMenuItem(
               value: criteria,
               child: Text(criteria),
             ))
                 .toList(),
-            onChanged: (value) {
-              if (value != null) {
-                _sortEvents(value);
-              }
-            },
           ),
         ],
       ),
-      body: _shownEvents.isNotEmpty
-          ? ListView.builder(
-        itemCount: _shownEvents.length,
-        itemBuilder: (context, index) {
-          final event = _shownEvents[index];
-
-          // Skip unpublished events if pledgerId is not null
-          if (!event.isPublished && widget.pledgerId != null) {
-            return SizedBox.shrink();
-          }
-
-          else {
-            return Card(
-              margin: const EdgeInsets.all(8.0),
-              elevation: 4,
-              child: ListTile(
-                title: Text(
-                  event.name,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 5),
-                    Text("Category: ${event.category}"),
-                    Text("Status: ${event.status}"),
-                    Text("Date: ${DateFormat('dd MMM yyyy').format(
-                        event.date)}"),
-                    Text("Location: ${event.location}"),
-                    Text("Description: ${event.description}"),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!event.isPublished && widget.pledgerId == null)
-                      IconButton(
-                        icon: Icon(Icons.publish, color: Colors.blue),
-                        tooltip: "Publish",
-                        onPressed: () => _publishEvent(event.id),
-                      ),
-                    if (widget.pledgerId == null)
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == "Edit") {
-                            _editEvent(event);
-
-                          } else if (value == "Delete") {
-                            _deleteEvent(event.id);
-                          }
-                        },
-                        itemBuilder: (context) =>
-                        [
-                          PopupMenuItem(
-                            value: "Edit",
-                            child: Text("Edit"),
-                          ),
-                          PopupMenuItem(
-                            value: "Delete",
-                            child: Text("Delete"),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-                onTap: () {
-                  // Navigate to the Gift List Page
-                  Navigator.pushNamed(
-                    context,
-                    '/giftList',
-                    arguments: {
-                      'event': event,
-                      'userId': widget.userId, // Pass the actual userId here
-                      'pledgerId': widget.pledgerId,
-                    },
-                  );
-                },
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade200, Colors.purple.shade300],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            );
-          }
-        },
-      )
+            ),
+          ),
+          _shownEvents.isNotEmpty
+              ? ListView.builder(
+            itemCount: _shownEvents.length,
+            itemBuilder: (context, index) {
+              final event = _shownEvents[index];
 
-          : Center(child: Text("No events found. Add one to get started!")),
+              // Skip unpublished events if pledgerId is not null
+              if (!event.isPublished && widget.pledgerId != null) {
+                return SizedBox.shrink();
+              }
+
+              return Card(
+                margin: const EdgeInsets.all(8.0),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+                  title: Text(
+                    event.name,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 5),
+                      Text("Category: ${event.category}"),
+                      Text("Status: ${event.status}"),
+                      Text("Date: ${DateFormat('dd MMM yyyy').format(event.date)}"),
+                      Text("Location: ${event.location}"),
+                      Text("Description: ${event.description}"),
+                    ],
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!event.isPublished && widget.pledgerId == null)
+                        IconButton(
+                          icon: Icon(Icons.publish, color: Colors.blue),
+                          tooltip: "Publish",
+                          onPressed: () => _publishEvent(event.id),
+                        ),
+                      if (widget.pledgerId == null)
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == "Edit") {
+                              _editEvent(event);
+                            } else if (value == "Delete") {
+                              _deleteEvent(event.id);
+                            }
+                          },
+                          itemBuilder: (context) =>
+                          [
+                            PopupMenuItem(
+                              value: "Edit",
+                              child: Text("Edit"),
+                            ),
+                            PopupMenuItem(
+                              value: "Delete",
+                              child: Text("Delete"),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  onTap: () {
+                    // Navigate to the Gift List Page
+                    Navigator.pushNamed(
+                      context,
+                      '/giftList',
+                      arguments: {
+                        'event': event,
+                        'userId': widget.userId, // Pass the actual userId here
+                        'pledgerId': widget.pledgerId,
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          )
+              : Center(child: Text("No events found. Add one to get started!")),
+        ],
+      ),
       floatingActionButton: widget.pledgerId == null
           ? FloatingActionButton(
         onPressed: _addEvent,
-        child: Icon(Icons.add),
+        backgroundColor: Colors.amber,
+        child: Icon(Icons.add, color: Colors.black),
       )
           : null,
     );
