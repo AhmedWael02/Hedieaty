@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../controllers/gift_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_gift_controller.dart';
+import '../controllers/firestore_controllers/firestore_gift_controller.dart';
 import '../models/gift.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PledgedGiftsPage extends StatefulWidget {
   final String userId; // Use userId instead of userName
@@ -12,7 +14,8 @@ class PledgedGiftsPage extends StatefulWidget {
 }
 
 class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
-  final GiftController _controller = GiftController();
+  final SqliteGiftController _sqliteGiftController = SqliteGiftController();
+  final FirestoreGiftController _firestoreGiftController = FirestoreGiftController();
   List<Gift>? _pledgedGifts; // Null indicates loading
 
   @override
@@ -23,20 +26,51 @@ class _PledgedGiftsPageState extends State<PledgedGiftsPage> {
   }
 
   Future<void> _loadPledgedGifts() async {
-    List<Gift> gifts = await _controller.getPledgedGifts(widget.userId);
-    setState(() {
-      _pledgedGifts = gifts;
-    });
+    try {
+      // Fetch pledged gifts using Firestore
+      final gifts = await _firestoreGiftController.getPledgedGifts(widget.userId);
+
+      setState(() {
+        _pledgedGifts = gifts;
+      });
+    } catch (e) {
+      print("Error loading pledged gifts: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load pledged gifts. Please try again.")),
+      );
+    }
+  }
+
+
+  Future<void> _purchaseGift(String giftId) async {
+    await _sqliteGiftController.purchaseGift(giftId);
+    await FirebaseFirestore.instance
+        .collection('Gifts')
+        .doc(giftId)
+        .update({'status': 'Purchased'});
+    await     _loadPledgedGifts(); // Reload gifts after purchasing
   }
 
   Future<void> _unpledgeGift(String giftId) async {
-    await _controller.unpledgeGift(giftId); // Unpledge the gift
-    await _loadPledgedGifts(); // Refresh the list
-  }
+    try {
+      await FirebaseFirestore.instance.collection('Gifts').doc(giftId).update({
+        'status': 'Available',
+        'pledgedByUserId': null, // Clear the pledgedByUserId
+      });
 
-  Future<void> _purchaseGift(String giftId) async {
-    await _controller.purchaseGift(giftId); // Unpledge the gift
-    await _loadPledgedGifts(); // Refresh the list
+      await _sqliteGiftController.unpledgeGift(giftId);
+
+      await _loadPledgedGifts();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gift unpledged successfully!")),
+      );
+    } catch (e) {
+      print("Error unpledging gift: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to unpledge gift. Please try again.")),
+      );
+    }
   }
 
   @override

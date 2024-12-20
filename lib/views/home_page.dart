@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import '../controllers/friend_controller.dart';
-import '../controllers/user_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_friend_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_user_controller.dart';
 import '../widgets/friend_list_tile.dart';
 import '../models/friend.dart';
 import '../models/user.dart';
+import '../controllers/firestore_controllers/firestore_friend_controller.dart';
+import '../controllers/firestore_controllers/firetore_user_controller.dart';
 
 class HomePage extends StatefulWidget {
   final String userId; // Pass the signed-in user's ID
@@ -15,7 +17,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final FriendController _controller = FriendController();
+  final SqliteFriendController _sqliteFriendController = SqliteFriendController();
+  final FirestoreFriendController _firestoreFriendController = FirestoreFriendController();
+  final FirestoreUserController _firestoreUserController = FirestoreUserController();
   final TextEditingController _searchController = TextEditingController();
   List<Friend> _filteredFriends = [];
   bool _isLoading = true;
@@ -27,20 +31,51 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadFriends() async {
-    List<Friend> friends = await _controller.getFriendsByUserId(widget.userId);
     setState(() {
-      _filteredFriends = friends;
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      final friendsData = await _firestoreFriendController.getFriends(widget.userId);
+
+      _filteredFriends = friendsData.map((data) {
+        return Friend(
+          id: data['friendId'],
+          name: "Fetching...", // Placeholder
+          profileUrl: 'assets/images/placeholder.png',
+          upcomingEvents: 0,
+        );
+      }).toList();
+
+      for (var friend in _filteredFriends) {
+        final userData = await _firestoreUserController.getUser(friend.id);
+        if (userData != null) {
+          friend.name = userData['name'];
+        }
+
+        // Count upcoming events for each friend
+        friend.upcomingEvents = await _firestoreFriendController.countUpcomingEvents(friend.id);
+      }
+
+      setState(() {});
+    } catch (e) {
+      print("Error loading friends: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
+
+
+
 
   Future<void> _onSearchChanged(String query) async {
-    List<Friend> friends = await _controller.searchFriends(widget.userId, query);
+    List<Friend> friends = await _firestoreFriendController.searchFriends(widget.userId, query);
     setState(() {
       _filteredFriends = friends;
     });
   }
-
 
 
   void _addFriend() {
@@ -57,14 +92,12 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () async {
-              String phoneNumber = phoneController.text;
+              final phoneNumber = phoneController.text.trim();
 
               if (phoneNumber.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -73,26 +106,24 @@ class _HomePageState extends State<HomePage> {
                 return;
               }
 
-              // Check if the user exists with the given phone number
-              UserController userController = UserController();
-              User? friend = await userController.getUserByPhoneNumber(phoneNumber);
-
-              if (friend == null) {
+              // Fetch user by phone number
+              final userData = await _firestoreUserController.getUserByPhoneNumber(phoneNumber);
+              if (userData == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("No user found with this phone number.")),
                 );
-                Navigator.pop(context);
                 return;
               }
 
-              // Add the friend relationship
-              await _controller.addFriend(widget.userId, friend.id);
+              // Add friend relationship
+              await _firestoreFriendController.addFriend(widget.userId, userData['id']);
+              await _sqliteFriendController.addFriend(widget.userId, userData['id']);
 
               // Reload the friends list
               await _loadFriends();
 
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("${friend.name} has been added as a friend!")),
+                SnackBar(content: Text("${userData['name']} has been added as a friend!")),
               );
 
               Navigator.pop(context); // Close the dialog
@@ -103,6 +134,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
 
 
   void _createEvent() {

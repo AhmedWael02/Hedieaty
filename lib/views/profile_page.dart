@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import '../controllers/user_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_user_controller.dart';
+import '../controllers/firestore_controllers/firetore_user_controller.dart';
+import '../controllers/firestore_controllers/firestore_event_controller.dart';
 import '../models/user.dart';
-import '../controllers/event_controller.dart';
+import '../controllers/sqlite_controllers/sqlite_event_controller.dart';
 import '../models/event.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfilePage extends StatefulWidget {
 
@@ -15,8 +18,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final UserController _userController = UserController();
-  final EventController _eventController = EventController();
+  final SqliteUserController _sqliteUserController = SqliteUserController();
+  final SqliteEventController _sqliteEventController = SqliteEventController();
+  final FirestoreUserController _firestoreUserController = FirestoreUserController();
+  final FirestoreEventController _firestoreEventController = FirestoreEventController();
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
@@ -35,21 +40,59 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    User? user = await _userController.getUserById(widget.userId);
-    if (user != null) {
-      setState(() {
-        _currentUser = user;
-        _nameController = TextEditingController(text: user.name);
-        _emailController = TextEditingController(text: user.email);
-        _phoneController = TextEditingController(text: user.phoneNumber);
-        _selectedTheme = user.themePreference;
-        _notificationsEnabled = user.notificationsEnabled;
-      });
+    try {
+      // Fetch user data from Firestore
+      final userData = await _firestoreUserController.getUser(widget.userId);
+
+      if (userData != null) {
+        setState(() {
+          _currentUser = User(
+            id: widget.userId,
+            name: userData['name'] ?? '',
+            email: userData['email'] ?? '',
+            phoneNumber: userData['phoneNumber'] ?? '',
+            password: '', // Firestore doesn't store the password
+            themePreference: userData['themePreference'] ?? 'Light Mode',
+            notificationsEnabled: userData['notificationsEnabled'] ?? true,
+          );
+          _nameController = TextEditingController(text: _currentUser!.name);
+          _emailController = TextEditingController(text: _currentUser!.email);
+          _phoneController = TextEditingController(text: _currentUser!.phoneNumber);
+          _selectedTheme = _currentUser!.themePreference;
+          _notificationsEnabled = _currentUser!.notificationsEnabled;
+        });
+      } else {
+        throw Exception("User not found in Firestore.");
+      }
+    } catch (e) {
+      print("Error loading user data: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load user data. Please try again.")),
+      );
     }
   }
 
+
+
   Future<void> _loadUserEvents() async {
-    List<Event> events = await _eventController.getEventsByUserId(widget.userId);
+    List<Event> events = [];
+    final eventsData = await _firestoreEventController.getEvents(
+        widget.userId);
+    setState(() {
+      events = eventsData.map((data) {
+        return Event(
+          id: data['id'],
+          name: data['name'],
+          date: (data['date'] as Timestamp).toDate(),
+          location: data['location'],
+          description: data['description'],
+          category: data['category'],
+          status: data['status'],
+          creatorId: data['creatorId'],
+        );
+      }).toList();
+      // _events.sort((a, b) => a.name.compareTo(b.name));
+    });
     setState(() {
       _userEvents = events;
     });
@@ -57,25 +100,47 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _saveChanges() async {
     if (_currentUser != null) {
-      _currentUser = User(
-        id: _currentUser!.id,
-        name: _nameController.text,
-        email: _emailController.text,
-        phoneNumber: _phoneController.text,
-        password: _currentUser!.password, // Password remains unchanged
-        themePreference: _selectedTheme,
-        notificationsEnabled: _notificationsEnabled,
-      );
+      try {
+        // Update the current user object
+        _currentUser = User(
+          id: _currentUser!.id,
+          name: _nameController.text,
+          email: _emailController.text,
+          phoneNumber: _phoneController.text,
+          password: _currentUser!.password, // Password remains unchanged
+          themePreference: _selectedTheme,
+          notificationsEnabled: _notificationsEnabled,
+        );
 
-      await _userController.editUser(_currentUser!);
+        // Prepare data for Firestore
+        final userData = {
+          'name': _currentUser!.name,
+          'email': _currentUser!.email,
+          'phoneNumber': _currentUser!.phoneNumber,
+          'themePreference': _currentUser!.themePreference,
+          'notificationsEnabled': _currentUser!.notificationsEnabled,
+        };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Profile updated successfully!")),
-      );
+        // Save changes to Firestore
+        await _firestoreUserController.addOrUpdateUser(_currentUser!.id, userData);
+        await _sqliteUserController.editUser(_currentUser!);
 
-      setState(() {}); // Refresh UI if needed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Profile updated successfully!")),
+        );
+
+        setState(() {}); // Refresh UI if needed
+      } catch (e) {
+        print("Error saving user changes: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save changes. Please try again.")),
+        );
+      }
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
